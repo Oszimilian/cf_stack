@@ -1,11 +1,10 @@
 from setuptools import find_packages, setup
 
-package_name = 'cf_path_planning'
+package_name = 'cf_visualizer'
 
 data_flies = []
 data_flies.append(('share/ament_index/resource_index/packages', ['resource/' + package_name]))
 data_flies.append(('share/' + package_name, ['package.xml']))
-data_flies.append(('share/' + package_name + '/launch', ['launch/cf_path_planning.launch.py']))
 
 setup(
     name=package_name,
@@ -21,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'path_planning = cf_path_planning.path_planning:main'
+            'visualizer = cf_visualizer.visualizer:main'
         ],
     },
 )

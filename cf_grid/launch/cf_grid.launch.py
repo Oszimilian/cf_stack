@@ -14,8 +14,8 @@ def generate_launch_description():
     input_grid_path = LaunchConfiguration('input_grid_path')
 
     path_planing = Node(
-        package='cf_path_planning',
-        executable='path_planning',
+        package='cf_grid',
+        executable='grid',
         output='screen',
         parameters=[{
             'input_grid_path': input_grid_path
