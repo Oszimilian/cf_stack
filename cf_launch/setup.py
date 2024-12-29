@@ -1,11 +1,11 @@
 from setuptools import find_packages, setup
 
-package_name = 'cf_visualizer'
+package_name = 'cf_launch'
 
 data_flies = []
 data_flies.append(('share/ament_index/resource_index/packages', ['resource/' + package_name]))
 data_flies.append(('share/' + package_name, ['package.xml']))
-data_flies.append(('share/' + package_name + '/launch', ['launch/cf_visualizer.launch.py']))
+data_flies.append(('share/' + package_name + '/launch', ['launch/cf_launch.launch.py']))
 
 setup(
     name=package_name,
@@ -21,7 +21,6 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'visualizer = cf_visualizer.visualizer:main'
         ],
     },
 )

@@ -1,0 +1,74 @@
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.substitutions import LaunchConfiguration
+import os
+from ament_index_python.packages import get_package_share_directory
+
+def generate_launch_description():
+    # Erstelle Launch-Argumente
+    input_grid_path_arg = DeclareLaunchArgument(
+        'input_grid_path',
+        default_value='default.json',
+        description='Path to the json-file which describes the grid of the arena'
+    )
+
+    x_segment_size_arg = DeclareLaunchArgument(
+        'x_segment_size',
+        default_value='0.2',
+        description='x size of a segment'
+    )
+
+    y_segment_size_arg = DeclareLaunchArgument(
+        'y_segment_size',
+        default_value='0.2',
+        description='y size of a segment'
+    )
+
+    x_size_offset_arg = DeclareLaunchArgument(
+        'x_size_offset',
+        default_value='0.2',
+        description='Grid begins after x size offset'
+    )
+
+    y_size_offset_arg = DeclareLaunchArgument(
+        'y_size_offset',
+        default_value='0.2',
+        description='Grid begins after y size offset'
+    )
+
+    # Verwende IncludeLaunchDescription, um die Launch-Dateien von cf_grid und cf_visualizer zu integrieren
+    grid_launch_file = os.path.join(
+        get_package_share_directory('cf_grid'),
+        'launch',
+        'cf_grid.launch.py'  # Hier gehst du davon aus, dass du die Launch-Datei so genannt hast
+    )
+
+    visualizer_launch_file = os.path.join(
+        get_package_share_directory('cf_visualizer'),
+        'launch',
+        'cf_visualizer.launch.py'  # Hier gehst du davon aus, dass du die Launch-Datei so genannt hast
+    )
+
+    # Integriere die Launch-Dateien
+    grid_launch = IncludeLaunchDescription(grid_launch_file, launch_arguments={
+        'input_grid_path': LaunchConfiguration('input_grid_path'),
+        'x_segment_size': LaunchConfiguration('x_segment_size'),
+        'y_segment_size': LaunchConfiguration('y_segment_size'),
+        'x_size_offset': LaunchConfiguration('x_size_offset'),
+        'y_size_offset': LaunchConfiguration('y_size_offset')
+    }.items())
+
+    visualizer_launch = IncludeLaunchDescription(visualizer_launch_file, launch_arguments={
+        'x_segment_size': LaunchConfiguration('x_segment_size'),
+        'y_segment_size': LaunchConfiguration('y_segment_size')
+    }.items())
+
+    return LaunchDescription([
+        input_grid_path_arg,
+        x_segment_size_arg,
+        y_segment_size_arg,
+        x_size_offset_arg,
+        y_size_offset_arg,
+        grid_launch,
+        visualizer_launch
+    ])
