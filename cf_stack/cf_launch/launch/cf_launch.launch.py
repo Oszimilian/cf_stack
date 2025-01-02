@@ -36,20 +36,25 @@ def generate_launch_description():
         description='Grid begins after y size offset'
     )
 
-    # Verwende IncludeLaunchDescription, um die Launch-Dateien von cf_grid und cf_visualizer zu integrieren
+
     grid_launch_file = os.path.join(
         get_package_share_directory('cf_grid'),
         'launch',
-        'cf_grid.launch.py'  # Hier gehst du davon aus, dass du die Launch-Datei so genannt hast
+        'cf_grid.launch.py'
+    )
+
+    pathplanner_launch_file = os.path.join(
+        get_package_share_directory('cf_pathplanning'),
+        'launch',
+        'cf_pathplanning.launch.py'
     )
 
     visualizer_launch_file = os.path.join(
         get_package_share_directory('cf_visualizer'),
         'launch',
-        'cf_visualizer.launch.py'  # Hier gehst du davon aus, dass du die Launch-Datei so genannt hast
+        'cf_visualizer.launch.py'
     )
 
-    # Integriere die Launch-Dateien
     grid_launch = IncludeLaunchDescription(grid_launch_file, launch_arguments={
         'input_grid_path': LaunchConfiguration('input_grid_path'),
         'x_segment_size': LaunchConfiguration('x_segment_size'),
@@ -57,6 +62,8 @@ def generate_launch_description():
         'x_size_offset': LaunchConfiguration('x_size_offset'),
         'y_size_offset': LaunchConfiguration('y_size_offset')
     }.items())
+
+    pathplanner_launch = IncludeLaunchDescription(pathplanner_launch_file)
 
     visualizer_launch = IncludeLaunchDescription(visualizer_launch_file, launch_arguments={
         'x_segment_size': LaunchConfiguration('x_segment_size'),
@@ -70,5 +77,6 @@ def generate_launch_description():
         x_size_offset_arg,
         y_size_offset_arg,
         grid_launch,
-        visualizer_launch
+        visualizer_launch,
+        pathplanner_launch
     ])

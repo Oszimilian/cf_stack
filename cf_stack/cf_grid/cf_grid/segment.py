@@ -9,16 +9,17 @@ class Segment:
                     y_pos : float,
                     z_pos : float,
                     obstacle : bool,
-                    id : int ):
+                    start : bool):
         
         self.x_pos : float = x_pos
         self.y_pos : float = y_pos
         self.z_pos : float = z_pos
+        self.start : float = start
         self.obstacle : bool = obstacle
-        self.id : int = id
+
 
     def __str__(self):
-        return f'x: {self.x_pos} y: {self.y_pos} z: {self.z_pos} id: {self.id}'
+        return f'x: {self.x_pos} y: {self.y_pos} z: {self.z_pos}'
 
     
     def position_message(self) -> SegmentMsg:
@@ -27,6 +28,7 @@ class Segment:
         segment.y = self.y_pos
         segment.z = self.z_pos
         segment.obstacle = self.obstacle
+        segment.start = self.start
         return segment
 
     

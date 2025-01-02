@@ -4,6 +4,9 @@ from rclpy.node import Node
 from cf_messages.msg import SegmentMsg
 from cf_messages.msg import SegmentListMsg
 from visualization_msgs.msg import Marker
+from visualization_msgs.msg import MarkerArray
+from nav_msgs.msg import Path
+from geometry_msgs.msg import PoseStamped
 
 from typing import List, Dict
 
@@ -29,26 +32,54 @@ class Visualizer(Node):
                                                             self.segment_subscriber_callback,
                                                             10)
         
-        self.segment_vis_publisher = self.create_publisher( Marker,
+        self.segment_vis_publisher = self.create_publisher( MarkerArray,
                                                             'visualization_marker',
-                                                            1000)
+                                                            10)
         
-        self.last_segments : List[float] = []
+
+        self.path_subscriber = self.create_subscription(    SegmentListMsg,
+                                                            '/path',
+                                                            self.path_subscriber_callback,
+                                                            10)
+        
+        self.path_vis_publisher = self.create_publisher(    Path,
+                                                            'path_vis',
+                                                            10)
+        
+
 
 
     def segment_subscriber_callback(self, msg : SegmentListMsg):
-        first_step : bool = True if len(self.last_segments) == 0 else False
-        for id, segment in enumerate(msg.segments):
-            if first_step:
-                self.last_segments.append(segment.z)
-                segment_marker = self.get_segment_marker(segment, id)
-                self.segment_vis_publisher.publish(segment_marker)
-            
-            if self.last_segments[id] != segment.z:
-                segment_marker = self.get_segment_marker(segment, id)
-                self.segment_vis_publisher.publish(segment_marker)
-                self.last_segments[id] = segment.z
 
+        marker_array = MarkerArray()
+        for id, segment in enumerate(msg.segments):
+            marker_array.markers.append(self.get_segment_marker(segment, id))
+
+        self.segment_vis_publisher.publish(marker_array)
+
+    def path_subscriber_callback(self, msg : SegmentListMsg):
+        path = Path()
+
+        path.header.frame_id = 'map'
+        path.header.stamp = self.get_clock().now().to_msg()
+
+        for seg in msg.segments:
+            path.poses.append(self.get_path_pose(seg))
+
+        self.path_vis_publisher.publish(path)
+
+    def get_path_pose(self, segment : SegmentMsg) -> PoseStamped:
+        pose = PoseStamped()
+
+        pose.header.frame_id = 'map'
+        pose.header.stamp = self.get_clock().now().to_msg()
+
+        pose.pose.position.x = segment.x
+        pose.pose.position.y = segment.y
+        pose.pose.position.z = segment.z
+        pose.pose.orientation.w = 1.0
+
+        return pose
 
     def get_segment_marker(self, segment : SegmentMsg, id : int) -> Marker:
         marker = Marker()
@@ -69,7 +100,7 @@ class Visualizer(Node):
 
         marker.color.r = 1.0 if segment.obstacle else 0.0
         marker.color.g = 1.0
-        marker.color.b = 0.0
+        marker.color.b = 1.0 if segment.start else 0.0
         marker.color.a = 1.0
 
         marker.lifetime.sec = 0

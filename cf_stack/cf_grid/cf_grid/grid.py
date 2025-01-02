@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from rclpy.publisher import Publisher
+
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
 from cf_messages.msg import SegmentMsg
@@ -84,7 +84,7 @@ class Grid(Node):
                                                 y_pos=(y_segment_size * index_y) + y_size_offset + (y_segment_size / 2),
                                                 z_pos=0.0,
                                                 obstacle=seg,
-                                                id=index_y*len(grid) + index_x)
+                                                start=True if index_x == 0 and index_y == 0 else False)
                 
                 self.segments.append(segment)
 
