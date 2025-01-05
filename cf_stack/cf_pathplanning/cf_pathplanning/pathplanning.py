@@ -98,7 +98,7 @@ class PathPlanner(Node):
                 if i[0] == seg.y_id and i[1] == seg.x_id:
                     segment.x = seg.x
                     segment.y = seg.y
-                    segment.z = 0.0
+                    segment.z = 1.0
                     segment.obstacle = False
                     segment.start = seg.start
                     break

@@ -46,7 +46,14 @@ class Visualizer(Node):
                                                             'path_vis',
                                                             10)
         
-
+        self.path_opt_subscriber = self.create_subscription(    SegmentListMsg,
+                                                            '/path/opt',
+                                                            self.opt_path_subscriber_callback,
+                                                            10)
+        
+        self.path_opt_vis_publisher = self.create_publisher(    Path,
+                                                            'path_vis/opt',
+                                                            10)
 
 
     def segment_subscriber_callback(self, msg : SegmentListMsg):
@@ -56,6 +63,19 @@ class Visualizer(Node):
             marker_array.markers.append(self.get_segment_marker(segment, id))
 
         self.segment_vis_publisher.publish(marker_array)
+
+    def opt_path_subscriber_callback(self, msg : SegmentListMsg):
+        path = Path()
+
+        path.header.frame_id = 'map'
+        path.header.stamp = self.get_clock().now().to_msg()
+
+        self.get_logger().info(f'{len(msg.segments)}')
+
+        for seg in msg.segments:
+            path.poses.append(self.get_path_pose(seg))
+
+        self.path_opt_vis_publisher.publish(path)
 
     def path_subscriber_callback(self, msg : SegmentListMsg):
         path = Path()

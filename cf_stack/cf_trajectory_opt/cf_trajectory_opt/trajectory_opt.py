@@ -1,0 +1,194 @@
+import rclpy
+from rclpy.node import Node
+from cf_messages.msg import SegmentListMsg
+from cf_messages.msg import SegmentMsg
+from dataclasses import dataclass
+from typing import List, Tuple
+
+from enum import Enum
+
+
+
+class TrajectoryOpt(Node):
+    def __init__(self):
+        super().__init__("TrajectoryOpt")
+        self.get_logger().info("Started TrajectoryOpt")
+
+        self.path_subscriber = self.create_subscription(    SegmentListMsg,
+                                                            '/path', 
+                                                            self.path_callback,
+                                                            10)
+        
+        self.trajectory_opt_publisher = self.create_publisher(  SegmentListMsg,
+                                                              '/path/opt',
+                                                              10)
+    
+
+    def get_sub_path(self, points : List[SegmentMsg], start_pos : int) -> List[SegmentMsg]:
+        if len(points) < start_pos + 3: return None
+        return points[start_pos:start_pos + 3]
+    
+    def get_movement(self, x_diff : float, y_diff : float) -> int:
+        if x_diff == 0 and y_diff > 0:
+            return 2
+        elif x_diff == 0 and y_diff < 0:
+            return 0
+        elif x_diff > 0 and y_diff == 0:
+            return 3
+        elif x_diff < 0 and y_diff == 0:
+            return 1
+        else:
+            return 4
+    
+    # 0=>UP 1=> RIGHT 2=>DOWN 3=>LEFT 4=>ERROR 
+    def get_sub_path_movements(self, points : List[SegmentMsg]) -> List[int]:
+        if len(points) > 3: return []
+        movements : List[int] = []
+
+        x_diff = points[0].x - points[1].x
+        y_diff = points[0].y - points[1].y
+
+        movement = self.get_movement(x_diff=x_diff, y_diff=y_diff)
+        if movement == 4: return []
+        movements.append(movement)
+
+        x_diff = points[1].x - points[2].x
+        y_diff = points[1].y - points[2].y
+
+        movement = self.get_movement(x_diff=x_diff, y_diff=y_diff)
+        if movement == 4: return []
+        movements.append(movement)
+
+        return movements
+
+
+    def get_opt_points(self, points : List[SegmentMsg]) -> List[Tuple[int, List[int]]]:
+        opt_points : List[Tuple[int, List[int]]] = []
+        for id, point in enumerate(points):
+            sub_path = self.get_sub_path(points=points, start_pos=id)
+            
+            if sub_path == None: continue
+            
+            sub_path_movements = self.get_sub_path_movements(points=sub_path)
+            
+            if len(sub_path_movements) == 0: continue
+            if sub_path_movements[0] == sub_path_movements[1]: continue
+            opt_points.append((id + 1, sub_path_movements))
+        return opt_points
+    
+    def get_adapted_segment(self, old_segment : SegmentMsg, pos : int) -> SegmentMsg:
+        segment = SegmentMsg()
+        
+        segment.x = old_segment.x
+        segment.y = old_segment.y
+        segment.z = old_segment.z
+
+        match pos:
+            case 0:
+                segment.y -= 0.1
+            case 1:
+                segment.x += 0.1
+            case 2:
+                segment.y += 0.1
+            case 3:
+                segment.x -= 0.1
+
+        self.get_logger().info(f'{segment} - {old_segment}')
+        return segment
+
+    
+    # 0=>UP 1=> RIGHT 2=>DOWN 3=>LEFT 4=>ERROR 
+    def get_opti_points(self, points : List[SegmentMsg], opt_points : List[Tuple[int, List[int]]]) -> SegmentListMsg:
+        count : int = 0
+        segmentList = SegmentListMsg()
+        for id, point in enumerate(points):
+            if count < len(opt_points):
+                if opt_points[count][0] == id:
+                    match opt_points[count][1]:
+                        case [0, 3]:
+                            segmentList.segments.append(self.get_adapted_segment(point, 2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3))
+                        case [0, 2]:
+                            segmentList.segments.append(self.get_adapted_segment(point, 0))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2))
+                        case [0, 1]:
+                            segmentList.segments.append(self.get_adapted_segment(point, 2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1))
+
+                        case [1, 2]:
+                            segmentList.segments.append(self.get_adapted_segment(point, 3))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2))
+                        case [1, 3]:
+                            segmentList.segments.append(self.get_adapted_segment(point, 1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3))
+                        case [1, 0]:
+                            segmentList.segments.append(self.get_adapted_segment(point, 3))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0))
+
+                        case [2, 3]:
+                            segmentList.segments.append(self.get_adapted_segment(point, 0))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3))
+                        case [2, 3]:
+                            segmentList.segments.append(self.get_adapted_segment(point, 2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0))
+                        case [2, 1]:
+                            segmentList.segments.append(self.get_adapted_segment(point, 0))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1))
+
+                        case [3, 2]:
+                            segmentList.segments.append(self.get_adapted_segment(point, 1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2))
+                        case [3, 1]:
+                            segmentList.segments.append(self.get_adapted_segment(point, 3))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1))
+                        case [3, 0]:
+                            segmentList.segments.append(self.get_adapted_segment(point, 1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0))
+                    count += 1
+                else:
+                    segmentList.segments.append(point)
+            else:
+                segmentList.segments.append(point)
+        return segmentList
+                    
+
+    def path_callback(self, msg : SegmentListMsg):
+        opt_points : List[Tuple[int, List[int]]] = self.get_opt_points(points=msg.segments)
+        new_points : SegmentListMsg = self.get_opti_points(points=msg.segments, opt_points=opt_points)
+        self.trajectory_opt_publisher.publish(new_points)
+
+                
+
+        
+
+        
+
+def main():
+    rclpy.init()
+    trajectoryOpt = TrajectoryOpt()
+
+    try:
+        rclpy.spin(trajectoryOpt)
+        trajectoryOpt.destroy_node()
+        rclpy.shutdown()
+    except KeyboardInterrupt:
+        pass
+
+if __name__ == "__main__":
+    main()

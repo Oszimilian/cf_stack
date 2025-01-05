@@ -49,6 +49,12 @@ def generate_launch_description():
         'cf_pathplanning.launch.py'
     )
 
+    trajectory_opt_launch_file = os.path.join(
+        get_package_share_directory('cf_trajectory_opt'),
+        "launch", 
+        "cf_trajectory_opt.launch.py"
+    )
+
     visualizer_launch_file = os.path.join(
         get_package_share_directory('cf_visualizer'),
         'launch',
@@ -65,6 +71,8 @@ def generate_launch_description():
 
     pathplanner_launch = IncludeLaunchDescription(pathplanner_launch_file)
 
+    trayjectory_launch = IncludeLaunchDescription(trajectory_opt_launch_file)
+
     visualizer_launch = IncludeLaunchDescription(visualizer_launch_file, launch_arguments={
         'x_segment_size': LaunchConfiguration('x_segment_size'),
         'y_segment_size': LaunchConfiguration('y_segment_size')
@@ -78,5 +86,6 @@ def generate_launch_description():
         y_size_offset_arg,
         grid_launch,
         visualizer_launch,
-        pathplanner_launch
+        pathplanner_launch,
+        trayjectory_launch
     ])
