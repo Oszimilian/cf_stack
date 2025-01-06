@@ -85,15 +85,14 @@ class TrajectoryOpt(Node):
 
         match pos:
             case 0:
-                segment.y -= 0.1
+                segment.y += 0.1
             case 1:
                 segment.x += 0.1
             case 2:
-                segment.y += 0.1
+                segment.y -= 0.1
             case 3:
                 segment.x -= 0.1
 
-        self.get_logger().info(f'{segment} - {old_segment}')
         return segment
 
     

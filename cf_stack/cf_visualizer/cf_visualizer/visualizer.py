@@ -70,10 +70,12 @@ class Visualizer(Node):
         path.header.frame_id = 'map'
         path.header.stamp = self.get_clock().now().to_msg()
 
-        self.get_logger().info(f'{len(msg.segments)}')
-
+        offset : float = 0
+        inc_step : float = 0.3 / len(msg.segments)
+        inc : float = 0
         for seg in msg.segments:
-            path.poses.append(self.get_path_pose(seg))
+            path.poses.append(self.get_path_pose(seg, z_offset=inc))
+            inc += inc_step
 
         self.path_opt_vis_publisher.publish(path)
 
@@ -88,7 +90,7 @@ class Visualizer(Node):
 
         self.path_vis_publisher.publish(path)
 
-    def get_path_pose(self, segment : SegmentMsg) -> PoseStamped:
+    def get_path_pose(self, segment : SegmentMsg, z_offset : float = 0) -> PoseStamped:
         pose = PoseStamped()
 
         pose.header.frame_id = 'map'
@@ -96,7 +98,7 @@ class Visualizer(Node):
 
         pose.pose.position.x = segment.x
         pose.pose.position.y = segment.y
-        pose.pose.position.z = segment.z
+        pose.pose.position.z = segment.z + z_offset
         pose.pose.orientation.w = 1.0
 
         return pose
