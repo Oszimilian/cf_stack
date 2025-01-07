@@ -70,9 +70,6 @@ class PathPlanner(Node):
                     y_line.append(0)
             self.grid.append(y_line)
 
-        #for i in self.grid:
-        #    self.get_logger().info(f'{i}')
-
         self.publish_path()
 
     def publish_path(self):
