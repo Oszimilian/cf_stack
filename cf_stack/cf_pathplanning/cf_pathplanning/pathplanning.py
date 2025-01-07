@@ -34,7 +34,7 @@ class PathPlanner(Node):
         self.grid : List[List[int]] = []
         self.segments : List[PathPlanningSegment] = []
 
-        self.cp_heuristics = [HeuristicType.VERTICAL, HeuristicType.HORIZONTAL]
+        self.cp_heuristics = [HeuristicType.MANHATTAN]
         self.orientations = [0, 1, 2, 3]
         
 
