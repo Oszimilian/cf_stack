@@ -4,6 +4,7 @@ from cf_messages.msg import SegmentListMsg
 from cf_messages.msg import SegmentMsg
 from dataclasses import dataclass
 from typing import List, Tuple
+import math
 
 from enum import Enum
 
@@ -165,11 +166,30 @@ class TrajectoryOpt(Node):
             else:
                 segmentList.segments.append(point)
         return segmentList
+    
+    def get_distance(self, point_a : SegmentMsg, point_b : SegmentMsg) -> float:
+        x_diff : float = point_b.x - point_a.x
+        y_diff : float = point_b.y - point_a.y
+        return math.sqrt(math.pow(x_diff, 2) + math.pow(y_diff, 2))
                     
+    def remove_near_points(self, segments: SegmentListMsg) -> SegmentListMsg:
+        rmv_point_ids: List[int] = []
+        new_segments = SegmentListMsg()
+        for idx, point in enumerate(segments.segments):
+            if idx + 1 < len(segments.segments):
+                next_point = segments.segments[idx + 1]
+                if self.get_distance(point, next_point) < 0.001:
+                    rmv_point_ids.append(idx)
+        for idx, segment in enumerate(segments.segments):
+            if idx not in rmv_point_ids:
+                new_segments.segments.append(segment)
+        
+        return new_segments
 
     def path_callback(self, msg : SegmentListMsg):
         opt_points : List[Tuple[int, List[int]]] = self.get_opt_points(points=msg.segments)
         new_points : SegmentListMsg = self.get_opti_points(points=msg.segments, opt_points=opt_points)
+        new_points = self.remove_near_points(new_points)
         self.trajectory_opt_publisher.publish(new_points)
 
                 

@@ -34,7 +34,7 @@ class PathPlanner(Node):
         self.grid : List[List[int]] = []
         self.segments : List[PathPlanningSegment] = []
 
-        self.cp_heuristics = [HeuristicType.MANHATTAN]
+        self.cp_heuristics = [HeuristicType.HORIZONTAL]
         self.orientations = [0, 1, 2, 3]
         
 
@@ -95,7 +95,7 @@ class PathPlanner(Node):
                 if i[0] == seg.y_id and i[1] == seg.x_id:
                     segment.x = seg.x
                     segment.y = seg.y
-                    segment.z = 1.0
+                    segment.z = 0.1
                     segment.obstacle = False
                     segment.start = seg.start
                     break

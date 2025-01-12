@@ -7,6 +7,9 @@ from visualization_msgs.msg import Marker
 from visualization_msgs.msg import MarkerArray
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PointStamped
+from std_msgs.msg import Header
+from geometry_msgs.msg import Point
 
 from typing import List, Dict
 
@@ -54,7 +57,26 @@ class Visualizer(Node):
         self.path_opt_vis_publisher = self.create_publisher(    Path,
                                                             'path_vis/opt',
                                                             10)
+        
+        self.ppc_pose_subscriber = self.create_subscription(    Point,
+                                                                '/ppc',
+                                                                self.ppc_pose_subscriber_callback,
+                                                                10)
 
+        self.ppc_pose_vis_publisher = self.create_publisher(    Marker,
+                                                                '/ppc/vis',
+                                                                10)
+
+    def segment_out_of_point(self, point : Point) -> SegmentMsg:
+        segment = SegmentMsg()
+        segment.x = point.x
+        segment.y = point.y
+        segment.z = point.z
+        return segment
+
+    def ppc_pose_subscriber_callback(self, msg : Point):
+        marker = self.get_segment_marker(segment=self.segment_out_of_point(msg), id=50, size_scale=0.5, rgb=[1.0, 0.0, 0.0])
+        self.ppc_pose_vis_publisher.publish(marker)
 
     def segment_subscriber_callback(self, msg : SegmentListMsg):
 
@@ -74,7 +96,7 @@ class Visualizer(Node):
         inc_step : float = 0.3 / len(msg.segments)
         inc : float = 0
         for seg in msg.segments:
-            path.poses.append(self.get_path_pose(seg, z_offset=inc))
+            path.poses.append(self.get_path_pose(seg, z_offset=0.0))
             inc += inc_step
 
         self.path_opt_vis_publisher.publish(path)
@@ -103,7 +125,7 @@ class Visualizer(Node):
 
         return pose
 
-    def get_segment_marker(self, segment : SegmentMsg, id : int) -> Marker:
+    def get_segment_marker(self, segment : SegmentMsg, id : int, size_scale : float = 1.0, rgb : List[float] = []) -> Marker:
         marker = Marker()
         marker.header.frame_id = 'map'
 
@@ -120,17 +142,23 @@ class Visualizer(Node):
         marker.pose.orientation.z = 0.0
         marker.pose.orientation.w = 1.0
 
-        marker.color.r = 1.0 if segment.obstacle else 0.0
-        marker.color.g = 1.0
-        marker.color.b = 1.0 if segment.start else 0.0
-        marker.color.a = 1.0
+        if len(rgb) == 0:
+            marker.color.r = 1.0 if segment.obstacle else 0.0
+            marker.color.g = 1.0
+            marker.color.b = 1.0 if segment.start else 0.0
+            marker.color.a = 1.0
+        else:
+            marker.color.r = rgb[0]
+            marker.color.g = rgb[1]
+            marker.color.b = rgb[2]
+            marker.color.a = 1.0
 
         marker.lifetime.sec = 0
         marker.lifetime.nanosec = 0
 
-        marker.scale.x = self.x_segment_size * 0.5
-        marker.scale.y = self.y_segment_size * 0.5
-        marker.scale.z = 0.1
+        marker.scale.x = self.x_segment_size * 0.5 * size_scale
+        marker.scale.y = self.y_segment_size * 0.5 * size_scale
+        marker.scale.z = 0.1 * size_scale
         marker.header.stamp = self.get_clock().now().to_msg()
 
         return marker
