@@ -38,37 +38,35 @@ class PPC(Node):
         self.act_dir : Pose = None
 
     def get_act_dir(self) -> Pose:
-        x_diff : float = self.segments[self.pos].x - self.segments[self.pos - 1].x
-        y_diff : float = self.segments[self.pos].y - self.segments[self.pos - 1].y
-
-        
+        x_diff : float = 0
+        y_diff : float = 0
+        if len(self.segments) > self.pos + 1:
+            x_diff : float = self.segments[self.pos + 1].x - self.segments[self.pos].x
+            y_diff : float = self.segments[self.pos + 1].y - self.segments[self.pos].y
         return Pose(x=x_diff, y=y_diff)
     
+    def is_ppc_finish(self) -> bool:
+            return True if len(self.segments) < self.pos + 1 else False
+    
     def get_act_angle(self) -> float:
-        pose : Pose = self.get_act_dir()
-
-        return math.atan2(pose.y, pose.x)
+        if self.act_dir.x != 0.0 and self.act_dir.y != 0.0:
+            return math.atan2(self.act_dir.y, self.act_dir.x)
+        elif self.act_dir.x == 0.0 and self.act_dir.y > 0.0:
+            return  math.pi / 2
+        elif self.act_dir.x == 0.0 and self.act_dir.y < 0.0:
+            return  math.pi / 2 * 3
+        elif self.act_dir.x > 0.0 and self.act_dir.y == 0.0:
+            return  0
+        elif self.act_dir.x < 0.0 and self.act_dir.y == 0.0:
+            return  math.pi
+        else:
+            self.get_logger().log("Error")
+            return 0
     
 
 
     def get_future_Pose(self, dist : float) -> Pose:
-        alpha : float = 0.0
-
-        if self.act_dir.x != 0.0 and self.act_dir.y != 0.0:
-            alpha = math.atan2(self.act_dir.y, self.act_dir.x)
-        elif self.act_dir.x == 0.0 and self.act_dir.y > 0.0:
-            alpha = math.pi / 2
-        elif self.act_dir.x == 0.0 and self.act_dir.y < 0.0:
-            alpha = math.pi / 2 * 3
-        elif self.act_dir.x > 0.0 and self.act_dir.y == 0.0:
-            alpha = 0
-        elif self.act_dir.x < 0.0 and self.act_dir.y == 0.0:
-            alpha = math.pi
-        else:
-            self.get_logger().log("Error")
-            return Pose(x=0.0, y=0.0)
-
-
+        alpha : float = self.get_act_angle()
         delta_x : float = math.cos(alpha) * dist
         delta_y : float = math.sin(alpha) * dist
         return Pose(x=delta_x, y=delta_y)
@@ -78,7 +76,7 @@ class PPC(Node):
         delta_y : float = self.segments[self.pos + 1].y - self.ppc_pos.y
         dist : float = math.sqrt(math.pow(delta_x, 2) + math.pow(delta_y, 2))
         
-        return True if dist <= self.delta_dist * 2 else False
+        return True if dist <= self.delta_dist * 3 else False
 
 
     def segment_list_callback(self, msg: SegmentListMsg):
@@ -86,7 +84,7 @@ class PPC(Node):
         self.segments = msg.segments
         if self.pos == -1:
             self.ppc_pos = Pose(x=msg.segments[0].x, y=msg.segments[0].y)
-            self.pos = 1
+            self.pos = 0
             self.act_dir = self.get_act_dir()
 
     def handle_ppc(self):
@@ -97,6 +95,10 @@ class PPC(Node):
             if self.is_ppc_pos_next_pos() == True:
                 self.pos += 1
                 self.act_dir = self.get_act_dir()
+                self.get_logger().info(f'dx={self.act_dir.x} dy={self.act_dir.y}')
+                self.get_logger().info(f'x={self.ppc_pos.x} y={self.ppc_pos.y}')
+
+
             point = Point()
             point.x = self.ppc_pos.x
             point.y = self.ppc_pos.y
