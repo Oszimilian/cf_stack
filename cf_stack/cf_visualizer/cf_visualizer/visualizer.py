@@ -89,7 +89,7 @@ class Visualizer(Node):
     def opt_path_subscriber_callback(self, msg : SegmentListMsg):
         path = Path()
 
-        path.header.frame_id = 'map'
+        path.header.frame_id = 'world'
         path.header.stamp = self.get_clock().now().to_msg()
 
         offset : float = 0
@@ -104,7 +104,7 @@ class Visualizer(Node):
     def path_subscriber_callback(self, msg : SegmentListMsg):
         path = Path()
 
-        path.header.frame_id = 'map'
+        path.header.frame_id = 'world'
         path.header.stamp = self.get_clock().now().to_msg()
 
         for seg in msg.segments:
@@ -115,11 +115,11 @@ class Visualizer(Node):
     def get_path_pose(self, segment : SegmentMsg, z_offset : float = 0) -> PoseStamped:
         pose = PoseStamped()
 
-        pose.header.frame_id = 'map'
+        pose.header.frame_id = 'world'
         pose.header.stamp = self.get_clock().now().to_msg()
 
-        pose.pose.position.x = segment.x
-        pose.pose.position.y = segment.y
+        pose.pose.position.x = segment.x - (self.x_segment_size / 2)
+        pose.pose.position.y = segment.y - (self.y_segment_size / 2)
         pose.pose.position.z = segment.z + z_offset
         pose.pose.orientation.w = 1.0
 
@@ -127,15 +127,15 @@ class Visualizer(Node):
 
     def get_segment_marker(self, segment : SegmentMsg, id : int, size_scale : float = 1.0, rgb : List[float] = []) -> Marker:
         marker = Marker()
-        marker.header.frame_id = 'map'
+        marker.header.frame_id = 'world'
 
         marker.ns = 'cube'
         marker.id = id
         marker.type = Marker.CUBE
         marker.action = Marker.ADD
 
-        marker.pose.position.x = segment.x
-        marker.pose.position.y = segment.y
+        marker.pose.position.x = segment.x - (self.x_segment_size / 2)
+        marker.pose.position.y = segment.y - (self.y_segment_size / 2)
         marker.pose.position.z = segment.z
         marker.pose.orientation.x = 0.0
         marker.pose.orientation.y = 0.0
