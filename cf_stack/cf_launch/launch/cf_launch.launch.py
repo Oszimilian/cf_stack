@@ -16,6 +16,7 @@ def generate_launch_description():
         'x_segment_size',
         default_value='0.2',
         description='x size of a segment'
+        
     )
 
     y_segment_size_arg = DeclareLaunchArgument(
@@ -26,13 +27,13 @@ def generate_launch_description():
 
     x_size_offset_arg = DeclareLaunchArgument(
         'x_size_offset',
-        default_value='0.2',
+        default_value='-1.4',
         description='Grid begins after x size offset'
     )
 
     y_size_offset_arg = DeclareLaunchArgument(
         'y_size_offset',
-        default_value='0.2',
+        default_value='-1.4',
         description='Grid begins after y size offset'
     )
 
