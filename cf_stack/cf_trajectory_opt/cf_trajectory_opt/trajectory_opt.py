@@ -138,7 +138,7 @@ class TrajectoryOpt(Node):
                             segmentList.segments.append(self.get_adapted_segment(point, 1))
                             segmentList.segments.append(self.get_adapted_segment(point, 2))
                             segmentList.segments.append(self.get_adapted_segment(point, 3))
-                        case [2, 3]:
+                        case [2, 0]:
                             segmentList.segments.append(self.get_adapted_segment(point, 2))
                             segmentList.segments.append(self.get_adapted_segment(point, 0))
                         case [2, 1]:
