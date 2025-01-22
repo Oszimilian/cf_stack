@@ -95,8 +95,7 @@ class PPC(Node):
             if self.is_ppc_pos_next_pos() == True:
                 self.pos += 1
                 self.act_dir = self.get_act_dir()
-                self.get_logger().info(f'dx={self.act_dir.x} dy={self.act_dir.y}')
-                self.get_logger().info(f'x={self.ppc_pos.x} y={self.ppc_pos.y}')
+
 
 
             point = Point()

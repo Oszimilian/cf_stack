@@ -34,7 +34,7 @@ class PathPlanner(Node):
         self.grid : List[List[int]] = []
         self.segments : List[PathPlanningSegment] = []
 
-        self.cp_heuristics = [HeuristicType.VERTICAL]
+        self.cp_heuristics = [HeuristicType.HORIZONTAL]
         self.orientations = [0, 1, 2, 3]
         
 
@@ -72,24 +72,84 @@ class PathPlanner(Node):
 
         self.publish_path()
 
-    def publish_path(self):
+    def get_path(self, heuristic, grid) -> List:
         compare_tb = []
 
-        cp = CoveragePlanner(self.grid)
+        cp = CoveragePlanner(grid)
 
-        for heuristic in self.cp_heuristics:
-            for orientation in self.orientations:
-                cp.start(initial_orientation=orientation, cp_heuristic=heuristic)
-                cp.compute()
+        for orientation in self.orientations:
+            cp.start(initial_orientation=orientation, cp_heuristic=heuristic)
+            cp.compute()
 
-                res = [heuristic.name, orientation]
-                res.extend(cp.result())
-                compare_tb.append(res)
+            res = [heuristic.name, orientation]
+            res.extend(cp.result())
+            compare_tb.append(res)
 
         compare_tb.sort(key=lambda x: (x[3], x[4]))
 
+        return compare_tb[0][6]
+    
+    def is_close_to_zero(self, value : float, epsilon : float = 0.0001) -> bool:
+        return value < epsilon and value > -epsilon
+    
+    def get_act_angle(self, act_pos : List, next_pos : List) -> float:
+        #self.get_logger().info(f'{act_pos} ==> {next_pos}')
+        x_diff : float = next_pos[0] - act_pos[0]
+        y_diff : float = next_pos[1] - act_pos[1]
+        if x_diff > 0 and self.is_close_to_zero(y_diff):
+            return 0
+        elif x_diff < 0 and self.is_close_to_zero(y_diff):
+            return 180
+        elif self.is_close_to_zero(x_diff) and y_diff > 0:
+            return 90
+        elif self.is_close_to_zero(x_diff) and y_diff < 0:
+            return 270
+        else:
+            self.get_logger().info("Error")
+            return -1
+
+    
+    def get_path_sections(self, path : List) -> List[List]:
+        sections : List[List] = []
+        angle : float = self.get_act_angle(path[0], path[1])
+
+        section : List = []
+        for a, b in zip(path[1:], path[2:]):
+            new_angle : float = self.get_act_angle(a, b)
+            if new_angle != angle:
+                sections.append(section)
+                section = []
+            section.append(a)
+
+        return sections
+    
+    def get_score_of_path(self, path) -> int:
+        sections : List[List] = self.get_path_sections(path)
+        sections.sort(key=len)
+        sections.reverse()
+        score = 225 - len(sections)
+        for i in range(1, 225):
+            for section in sections:
+                if len(section) == i and i > 2:
+                    score += i
+        self.get_logger().info(f'Score: {score}')
+        for section in sections:
+            if len(section) > 2:
+                pass
+                #self.get_logger().info(f'{section}')
+        return score
+
+    def get_opt_path(self) -> List:
+        path_a = self.get_path(HeuristicType.HORIZONTAL, self.grid)
+        path_b = self.get_path(HeuristicType.VERTICAL, self.grid)
+
+        return path_a if self.get_score_of_path(path_a) > self.get_score_of_path(path_b) else path_b
+
+
+    def publish_path(self):
+
         segment_list = SegmentListMsg()
-        for i in compare_tb[0][6]:
+        for i in self.get_opt_path():
             segment = SegmentMsg()
             for seg in self.segments:
                 if i[0] == seg.y_id and i[1] == seg.x_id:
