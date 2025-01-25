@@ -23,7 +23,7 @@ class PPC(Node):
                                                             self.segment_list_callback,
                                                             10)
         
-        self.timer = self.create_timer( 0.001,
+        self.timer = self.create_timer( 0.0045,
                                         self.handle_ppc)
         
         self.ppc_publisher = self.create_publisher( Point,

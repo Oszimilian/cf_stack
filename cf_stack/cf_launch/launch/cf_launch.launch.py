@@ -62,6 +62,12 @@ def generate_launch_description():
         "cf_trajectory_opt.launch.py"
     )
 
+    drone_launch_file = os.path.join(
+        get_package_share_directory('cf_drone'),
+        "launch", 
+        "cf_drone.launch.py"
+    )
+
     visualizer_launch_file = os.path.join(
         get_package_share_directory('cf_visualizer'),
         'launch',
@@ -82,6 +88,8 @@ def generate_launch_description():
 
     ppc_launch = IncludeLaunchDescription(ppc_launch_file)
 
+    drone_launch = IncludeLaunchDescription(drone_launch_file)
+
     visualizer_launch = IncludeLaunchDescription(visualizer_launch_file, launch_arguments={
         'x_segment_size': LaunchConfiguration('x_segment_size'),
         'y_segment_size': LaunchConfiguration('y_segment_size')
@@ -97,5 +105,6 @@ def generate_launch_description():
         visualizer_launch,
         pathplanner_launch,
         trayjectory_launch,
-        ppc_launch
+        ppc_launch,
+        drone_launch
     ])
