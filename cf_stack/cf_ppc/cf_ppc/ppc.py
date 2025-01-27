@@ -84,7 +84,7 @@ class PPC(Node):
 
     def get_future_edge_poses(self, start_ppc_pose : int, count : int) -> List[Pose]:
         edge_poses : List[Pose] = []
-        for pose in self.ppc_points:
+        for pose in self.ppc_points[start_ppc_pose:]:
             if pose.is_edge_pose == True:
                 edge_poses.append(pose)
                 count -= 1

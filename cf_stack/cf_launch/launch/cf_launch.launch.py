@@ -74,6 +74,12 @@ def generate_launch_description():
         'cf_visualizer.launch.py'
     )
 
+    velocity_planner_launch_file = os.path.join(
+        get_package_share_directory('cf_velocity_planner'),
+        'launch',
+        'cf_velocity_planner.launch.py'
+    )
+
     grid_launch = IncludeLaunchDescription(grid_launch_file, launch_arguments={
         'input_grid_path': LaunchConfiguration('input_grid_path'),
         'x_segment_size': LaunchConfiguration('x_segment_size'),
@@ -89,6 +95,8 @@ def generate_launch_description():
     ppc_launch = IncludeLaunchDescription(ppc_launch_file)
 
     drone_launch = IncludeLaunchDescription(drone_launch_file)
+
+    velocity_planner_launch = IncludeLaunchDescription(velocity_planner_launch_file)
 
     visualizer_launch = IncludeLaunchDescription(visualizer_launch_file, launch_arguments={
         'x_segment_size': LaunchConfiguration('x_segment_size'),
@@ -106,5 +114,6 @@ def generate_launch_description():
         pathplanner_launch,
         trayjectory_launch,
         ppc_launch,
-        drone_launch
+        drone_launch,
+        velocity_planner_launch
     ])
