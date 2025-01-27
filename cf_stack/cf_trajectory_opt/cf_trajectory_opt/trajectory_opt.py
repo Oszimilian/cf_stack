@@ -77,7 +77,7 @@ class TrajectoryOpt(Node):
             opt_points.append((id + 1, sub_path_movements))
         return opt_points
     
-    def get_adapted_segment(self, old_segment : SegmentMsg, pos : int) -> SegmentMsg:
+    def get_adapted_segment(self, old_segment : SegmentMsg, pos : int, scale : float) -> SegmentMsg:
         segment = SegmentMsg()
         
         segment.x = old_segment.x
@@ -86,80 +86,83 @@ class TrajectoryOpt(Node):
 
         match pos:
             case 0:
-                segment.y += 0.1
+                segment.y += scale
             case 1:
-                segment.x += 0.1
+                segment.x += scale
             case 2:
-                segment.y -= 0.1
+                segment.y -= scale
             case 3:
-                segment.x -= 0.1
+                segment.x -= scale
 
         return segment
 
     
     # 0=>UP 1=> RIGHT 2=>DOWN 3=>LEFT 4=>ERROR 
     def get_opti_points(self, points : List[SegmentMsg], opt_points : List[Tuple[int, List[int]]]) -> SegmentListMsg:
+        opt1 : float = 0.1
+        opt2 : float = 0.1
         count : int = 0
         segmentList = SegmentListMsg()
         for id, point in enumerate(points):
             if count < len(opt_points):
                 if opt_points[count][0] == id:
                     match opt_points[count][1]:
+                        #UP-LEFT
                         case [0, 3]:
-                            segmentList.segments.append(self.get_adapted_segment(point, 2))
-                            segmentList.segments.append(self.get_adapted_segment(point, 1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 0))
-                            segmentList.segments.append(self.get_adapted_segment(point, 3))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt2))
                         case [0, 2]:
-                            segmentList.segments.append(self.get_adapted_segment(point, 0))
-                            segmentList.segments.append(self.get_adapted_segment(point, 2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt2))
                         case [0, 1]:
-                            segmentList.segments.append(self.get_adapted_segment(point, 2))
-                            segmentList.segments.append(self.get_adapted_segment(point, 3))
-                            segmentList.segments.append(self.get_adapted_segment(point, 0))
-                            segmentList.segments.append(self.get_adapted_segment(point, 1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt2))
 
                         case [1, 2]:
-                            segmentList.segments.append(self.get_adapted_segment(point, 3))
-                            segmentList.segments.append(self.get_adapted_segment(point, 0))
-                            segmentList.segments.append(self.get_adapted_segment(point, 1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt2))
                         case [1, 3]:
-                            segmentList.segments.append(self.get_adapted_segment(point, 1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 3))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt2))
                         case [1, 0]:
-                            segmentList.segments.append(self.get_adapted_segment(point, 3))
-                            segmentList.segments.append(self.get_adapted_segment(point, 2))
-                            segmentList.segments.append(self.get_adapted_segment(point, 1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 0))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt2))
 
                         case [2, 3]:
-                            segmentList.segments.append(self.get_adapted_segment(point, 0))
-                            segmentList.segments.append(self.get_adapted_segment(point, 1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 2))
-                            segmentList.segments.append(self.get_adapted_segment(point, 3))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt2))
                         case [2, 0]:
-                            segmentList.segments.append(self.get_adapted_segment(point, 2))
-                            segmentList.segments.append(self.get_adapted_segment(point, 0))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt2))
                         case [2, 1]:
-                            segmentList.segments.append(self.get_adapted_segment(point, 0))
-                            segmentList.segments.append(self.get_adapted_segment(point, 3))
-                            segmentList.segments.append(self.get_adapted_segment(point, 2))
-                            segmentList.segments.append(self.get_adapted_segment(point, 1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt2))
 
                         case [3, 2]:
-                            segmentList.segments.append(self.get_adapted_segment(point, 1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 0))
-                            segmentList.segments.append(self.get_adapted_segment(point, 3))
-                            segmentList.segments.append(self.get_adapted_segment(point, 2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt1))
                         case [3, 1]:
-                            segmentList.segments.append(self.get_adapted_segment(point, 3))
-                            segmentList.segments.append(self.get_adapted_segment(point, 1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt2))
                         case [3, 0]:
-                            segmentList.segments.append(self.get_adapted_segment(point, 1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 2))
-                            segmentList.segments.append(self.get_adapted_segment(point, 3))
-                            segmentList.segments.append(self.get_adapted_segment(point, 0))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt2))
                     count += 1
                 else:
                     segmentList.segments.append(point)

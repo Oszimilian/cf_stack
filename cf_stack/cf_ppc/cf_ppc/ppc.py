@@ -11,6 +11,7 @@ from geometry_msgs.msg import Point
 class Pose:
     x : float
     y : float
+    is_edge_pose : bool
 
 
 class PPC(Node):
@@ -23,88 +24,95 @@ class PPC(Node):
                                                             self.segment_list_callback,
                                                             10)
         
-        self.timer = self.create_timer( 0.0045,
+        self.timer = self.create_timer( 0.0035,
                                         self.handle_ppc)
         
         self.ppc_publisher = self.create_publisher( Point,
                                                     '/ppc',
                                                     10)
         
-        self.delta_dist : float = 0.001
+        self.future_points = self.create_publisher( SegmentListMsg,
+                                                    '/path/future',
+                                                    10)
         
-        self.segments : List[SegmentMsg] = []
-        self.pos : int = -1
-        self.ppc_pos : Pose = None
-        self.act_dir : Pose = None
+        self.ppc_points : List[Pose] = []
+        self.ppc_points_pose : int = 0
+        self.ppc_path_done : bool = False
+        self.delta_dist : float = 0.001
 
-    def get_act_dir(self) -> Pose:
-        x_diff : float = 0
-        y_diff : float = 0
-        if len(self.segments) > self.pos + 1:
-            x_diff : float = self.segments[self.pos + 1].x - self.segments[self.pos].x
-            y_diff : float = self.segments[self.pos + 1].y - self.segments[self.pos].y
-        return Pose(x=x_diff, y=y_diff)
+
+    def get_distance(self, a : SegmentMsg, b : SegmentMsg) -> float:
+        delta_x : float = b.x - a.x
+        delta_y : float = b.y - a.y
+        return math.sqrt(math.pow(delta_x, 2) + math.pow(delta_y, 2))
     
-    def is_ppc_finish(self) -> bool:
-            return True if len(self.segments) < self.pos + 1 else False
-    
-    def get_act_angle(self) -> float:
-        if self.act_dir.x != 0.0 and self.act_dir.y != 0.0:
-            return math.atan2(self.act_dir.y, self.act_dir.x)
-        elif self.act_dir.x == 0.0 and self.act_dir.y > 0.0:
+    def get_angle(self, a : SegmentMsg, b : SegmentMsg) -> float:
+        delta_x : float = b.x - a.x
+        delta_y : float = b.y - a.y
+        if delta_x != 0.0 and delta_y!= 0.0:
+            return math.atan2(delta_y, delta_x)
+        elif delta_x == 0.0 and delta_y > 0.0:
             return  math.pi / 2
-        elif self.act_dir.x == 0.0 and self.act_dir.y < 0.0:
+        elif delta_x == 0.0 and delta_y < 0.0:
             return  math.pi / 2 * 3
-        elif self.act_dir.x > 0.0 and self.act_dir.y == 0.0:
+        elif delta_x > 0.0 and delta_y == 0.0:
             return  0
-        elif self.act_dir.x < 0.0 and self.act_dir.y == 0.0:
+        elif delta_x < 0.0 and delta_y == 0.0:
             return  math.pi
         else:
             self.get_logger().log("Error")
             return 0
-    
-
-
-    def get_future_Pose(self, dist : float) -> Pose:
-        alpha : float = self.get_act_angle()
-        delta_x : float = math.cos(alpha) * dist
-        delta_y : float = math.sin(alpha) * dist
-        return Pose(x=delta_x, y=delta_y)
-    
-    def is_ppc_pos_next_pos(self) -> bool:
-        delta_x : float = self.segments[self.pos + 1].x - self.ppc_pos.x
-        delta_y : float = self.segments[self.pos + 1].y - self.ppc_pos.y
-        dist : float = math.sqrt(math.pow(delta_x, 2) + math.pow(delta_y, 2))
         
-        return True if dist <= self.delta_dist * 3 else False
-
-
+    def get_new_point(self, start_point : Pose, angle : float, distance : float) -> Pose:
+        delta_x : float = math.cos(angle) * distance
+        delta_y : float = math.sin(angle) * distance
+        return Pose(x=start_point.x + delta_x, y=start_point.y + delta_y, is_edge_pose=False)
+    
     def segment_list_callback(self, msg: SegmentListMsg):
-        self.segments.clear()
-        self.segments = msg.segments
-        if self.pos == -1:
-            self.ppc_pos = Pose(x=msg.segments[0].x, y=msg.segments[0].y)
-            self.pos = 0
-            self.act_dir = self.get_act_dir()
+        if self.ppc_path_done == False:
+            for a, b in zip(msg.segments, msg.segments[1:]):
+                dist : float = self.get_distance(a=a, b=b)
+                steps : int = (int)(dist / self.delta_dist) - 1
+                angle : float = self.get_angle(a=a, b=b)
+                start_pose : Pose = Pose(a.x, a.y, is_edge_pose=True)
+                self.ppc_points.append(start_pose)
+                for i in range(steps):
+                    new_pose : Pose = self.get_new_point(start_point=start_pose, angle=angle, distance=self.delta_dist)
+                    self.ppc_points.append(new_pose)
+                    start_pose = new_pose
+            self.ppc_path_done = True
+
+    def get_future_edge_poses(self, start_ppc_pose : int, count : int) -> List[Pose]:
+        edge_poses : List[Pose] = []
+        for pose in self.ppc_points:
+            if pose.is_edge_pose == True:
+                edge_poses.append(pose)
+                count -= 1
+                if count == 0:
+                    return edge_poses
+        return edge_poses
 
     def handle_ppc(self):
-        if len(self.segments) > (self.pos + 1):
-            new_pos = self.get_future_Pose(dist=self.delta_dist)
-            self.ppc_pos.x += new_pos.x
-            self.ppc_pos.y += new_pos.y
-            if self.is_ppc_pos_next_pos() == True:
-                self.pos += 1
-                self.act_dir = self.get_act_dir()
-
-
-
+        if self.ppc_points_pose < len(self.ppc_points):
             point = Point()
-            point.x = self.ppc_pos.x
-            point.y = self.ppc_pos.y
+            point.x = self.ppc_points[self.ppc_points_pose].x
+            point.y = self.ppc_points[self.ppc_points_pose].y
             point.z = 0.1
             self.ppc_publisher.publish(point)
 
+            if self.ppc_points[self.ppc_points_pose].is_edge_pose == True:
+                future_poses : List[Pose] = self.get_future_edge_poses(self.ppc_points_pose, 3)
 
+                segments = SegmentListMsg()
+                for pose in future_poses:
+                    segment = SegmentMsg()
+                    segment.x = pose.x
+                    segment.y = pose.y
+                    segments.segments.append(segment)
+                    
+                self.future_points.publish(segments)
+
+            self.ppc_points_pose += 1
 
 
 def main():
