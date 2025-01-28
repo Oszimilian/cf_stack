@@ -142,7 +142,7 @@ class PPC(Node):
             self.main_path_pose += 1
             self.local_path_pose = 0
 
-            if self.main_path_pose + 2 <= len(self.main_path_points):
+            if self.main_path_pose + 3 <= len(self.main_path_points):
                 self.publish_future_points()
 
         if self.local_path_pose < len(self.local_path_points):
