@@ -27,6 +27,14 @@ class VelocityPlanner(Node):
                                                         '/path/angle',
                                                         10)
 
+        self.ppc_velocity_publisher = self.create_publisher(    Float32,
+                                                                '/ppc/velocity',
+                                                                10)
+        
+        self.target_velocity : float = 0.2
+        self.act_velocity : float = 0.2
+        self.velocity_inc : float = 0.02
+
     def get_angle_abc(self, a: SegmentMsg, b: SegmentMsg, c: SegmentMsg) -> float:
         ab_x = b.x - a.x
         ab_y = b.y - a.y
@@ -45,12 +53,32 @@ class VelocityPlanner(Node):
         angle_deg = math.degrees(angle_rad)
         return angle_deg
 
+    def get_velocity(self, angle : float) -> float:
+        if angle >= 0 and angle < 45.0:
+            return 0.35
+        elif angle >= 45 and angle < 90:
+            return 0.27
+        else:
+            return 0.19
+
     def future_points_callback(self, msg : SegmentListMsg):
         angle : float = self.get_angle_abc(msg.segments[0], msg.segments[1], msg.segments[2])
 
         path_angle : Float32 = Float32()
         path_angle.data = angle
         self.angle_publisher.publish(path_angle)
+
+        self.target_velocity = self.get_velocity(angle)
+
+        if self.target_velocity - self.act_velocity > 0:
+            self.act_velocity += self.velocity_inc
+        elif self.target_velocity - self.act_velocity < 0:
+            self.act_velocity = self.target_velocity
+
+
+        ppc_velocity : Float32 = Float32()
+        ppc_velocity.data = self.act_velocity
+        self.ppc_velocity_publisher.publish(ppc_velocity)
         
 
 def main():
