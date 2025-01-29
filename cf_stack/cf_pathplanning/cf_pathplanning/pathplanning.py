@@ -5,6 +5,7 @@ from cf_messages.msg import SegmentMsg
 from dataclasses import dataclass
 from typing import List, Dict
 from cf_pathplanning.coverage_planner import CoveragePlanner, HeuristicType
+import copy
 
 @dataclass
 class PathPlanningSegment:
@@ -105,12 +106,13 @@ class PathPlanner(Node):
         elif self.is_close_to_zero(x_diff) and y_diff < 0:
             return 270
         else:
-            self.get_logger().info("Error")
+            self.get_logger().info(f"Error: {x_diff} - {y_diff}")
             return -1
 
     
     def get_path_sections(self, path : List) -> List[List]:
         sections : List[List] = []
+        if len(path) < 2: return [[]]
         angle : float = self.get_act_angle(path[0], path[1])
 
         section : List = []
@@ -124,6 +126,7 @@ class PathPlanner(Node):
         return sections
     
     def get_score_of_path(self, path) -> int:
+        if len(path) == 0: return -1000000
         sections : List[List] = self.get_path_sections(path)
         sections.sort(key=len)
         sections.reverse()
@@ -133,17 +136,56 @@ class PathPlanner(Node):
                 if len(section) == i and i > 2:
                     score += i
         self.get_logger().info(f'Score: {score}')
-        for section in sections:
-            if len(section) > 2:
-                pass
-                #self.get_logger().info(f'{section}')
+
         return score
+    
+    def get_best_path(self, grid) -> List:
+        best_path : List = []
+        for heuristic in [HeuristicType.HORIZONTAL, HeuristicType.VERTICAL]:
+            path = self.get_path(heuristic=heuristic, grid=grid)
+            if self.get_score_of_path(path) > self.get_score_of_path(best_path):
+                best_path = path
+        return best_path
+    
+    def insert_new_start_pose_in_grid(self, grid : List[List[int]], start_pose : List[int]) -> List[List[int]]:
+        found_start : bool = False
+        for y_id, y in enumerate(grid):
+            for x_id, x in enumerate(y):
+                if x == 2:
+                    grid[y_id][x_id] = 1
+                    found_start = True
+        if found_start == False: return []
+        grid[start_pose[1]][start_pose[0]] = 2
+        return grid
+        
 
     def get_opt_path(self) -> List:
-        path_a = self.get_path(HeuristicType.HORIZONTAL, self.grid)
-        path_b = self.get_path(HeuristicType.VERTICAL, self.grid)
+        opt_path : List = []
+        local_grid : List[List[int]] = copy.copy(self.grid)
 
-        return path_a if self.get_score_of_path(path_a) > self.get_score_of_path(path_b) else path_b
+        start_path : List = self.get_best_path(local_grid)
+        opt_path.append(start_path[0])
+        start_path = start_path[1:]
+
+        while True:
+            local_grid = self.insert_new_start_pose_in_grid(local_grid, opt_path[-1])
+            if len(local_grid) == 0:
+                return start_path
+            path = self.get_best_path(local_grid)
+            if len(path) == 0:
+                break
+            if self.get_score_of_path(opt_path + start_path) < self.get_score_of_path(opt_path + path):
+                start_path = path
+            if len(start_path) > 0:
+                opt_path.append(start_path[0])
+                start_path = start_path[1:]
+
+        return opt_path
+            
+            
+            
+
+
 
 
     def publish_path(self):
