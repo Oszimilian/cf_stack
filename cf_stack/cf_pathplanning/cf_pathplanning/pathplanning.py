@@ -148,37 +148,39 @@ class PathPlanner(Node):
         return best_path
     
     def insert_new_start_pose_in_grid(self, grid : List[List[int]], start_pose : List[int]) -> List[List[int]]:
-        found_start : bool = False
-        for y_id, y in enumerate(grid):
-            for x_id, x in enumerate(y):
-                if x == 2:
-                    grid[y_id][x_id] = 1
-                    found_start = True
-        if found_start == False: return []
         grid[start_pose[1]][start_pose[0]] = 2
         return grid
-        
+    
+    def remove_start_pose_in_grid(self, grid : List[List[int]], start_pose : List[int]) -> List[List[int]]:
+        grid[start_pose[1]][start_pose[0]] = 1
+        return grid
 
     def get_opt_path(self) -> List:
         opt_path : List = []
         local_grid : List[List[int]] = copy.copy(self.grid)
 
         start_path : List = self.get_best_path(local_grid)
+
         opt_path.append(start_path[0])
         start_path = start_path[1:]
+        local_grid = self.remove_start_pose_in_grid(local_grid, opt_path[-1])
 
         while True:
-            local_grid = self.insert_new_start_pose_in_grid(local_grid, opt_path[-1])
-            if len(local_grid) == 0:
-                return start_path
+            if len(start_path) == 0: break
+
+            local_grid = self.insert_new_start_pose_in_grid(local_grid, start_path[0])
+
             path = self.get_best_path(local_grid)
-            if len(path) == 0:
-                break
+
+            if len(path) == 0: break
+            
             if self.get_score_of_path(opt_path + start_path) < self.get_score_of_path(opt_path + path):
                 start_path = path
-            if len(start_path) > 0:
-                opt_path.append(start_path[0])
-                start_path = start_path[1:]
+
+
+            opt_path.append(start_path[0])
+            start_path = start_path[1:]
+            local_grid = self.remove_start_pose_in_grid(local_grid, opt_path[-1])
 
         return opt_path
             
