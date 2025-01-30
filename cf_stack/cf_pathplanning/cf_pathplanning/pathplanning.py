@@ -2,6 +2,8 @@ import rclpy
 from rclpy.node import Node
 from cf_messages.msg import SegmentListMsg
 from cf_messages.msg import SegmentMsg
+from cf_messages.msg import Path
+from geometry_msgs.msg import Point
 from dataclasses import dataclass
 from typing import List, Dict
 from cf_pathplanning.coverage_planner import CoveragePlanner, HeuristicType
@@ -32,11 +34,17 @@ class PathPlanner(Node):
                                                         '/path',
                                                         10)
         
+        self.debug_path_publisher = self.create_publisher(  Path,
+                                                            "/path/debug",
+                                                            10)
+        
         self.grid : List[List[int]] = []
         self.segments : List[PathPlanningSegment] = []
 
         self.cp_heuristics = [HeuristicType.HORIZONTAL]
         self.orientations = [0, 1, 2, 3]
+
+        self.finished : bool = False
         
 
 
@@ -148,12 +156,29 @@ class PathPlanner(Node):
         return best_path
     
     def insert_new_start_pose_in_grid(self, grid : List[List[int]], start_pose : List[int]) -> List[List[int]]:
-        grid[start_pose[1]][start_pose[0]] = 2
+        grid[start_pose[0]][start_pose[1]] = 2
         return grid
     
     def remove_start_pose_in_grid(self, grid : List[List[int]], start_pose : List[int]) -> List[List[int]]:
-        grid[start_pose[1]][start_pose[0]] = 1
+        grid[start_pose[0]][start_pose[1]] = 1
         return grid
+    
+    def debug_path(self, path):
+        path_msg = Path()
+        for p in path:
+            point = Point()
+            point.x = float(p[1])
+            point.y = float(p[0])
+            point.z = 0.0
+            path_msg.points.append(point)
+        self.debug_path_publisher.publish(path_msg)
+
+    def is_finished(self, grid):
+        finished : bool = True
+        for y in range(len(grid)):
+            for x in range(len(y)):
+                finished = False if grid[y][x] == 0 else finished
+        return finished
 
     def get_opt_path(self) -> List:
         opt_path : List = []
@@ -166,21 +191,35 @@ class PathPlanner(Node):
         local_grid = self.remove_start_pose_in_grid(local_grid, opt_path[-1])
 
         while True:
-            if len(start_path) == 0: break
+            if len(start_path) == 1:
+                local_grid = self.insert_new_start_pose_in_grid(local_grid, opt_path[-1])
+                start_path = self.get_best_path(local_grid)
+                self.get_logger().info(f'-> {start_path}')
+                continue
+
 
             local_grid = self.insert_new_start_pose_in_grid(local_grid, start_path[0])
 
             path = self.get_best_path(local_grid)
 
-            if len(path) == 0: break
-            
-            if self.get_score_of_path(opt_path + start_path) < self.get_score_of_path(opt_path + path):
-                start_path = path
+            self.debug_path(path)
+
+            if len(path) == 0:
+                if self.is_finished(local_grid):
+                    self.get_logger().info("Finised PathPlanning")
+                    break
 
 
-            opt_path.append(start_path[0])
-            start_path = start_path[1:]
-            local_grid = self.remove_start_pose_in_grid(local_grid, opt_path[-1])
+            if len(path) > 0:
+                if self.get_score_of_path(opt_path + start_path) < self.get_score_of_path(opt_path + path):
+                    start_path = path
+
+
+                opt_path.append(start_path[0])
+                start_path = start_path[1:]
+                local_grid = self.remove_start_pose_in_grid(local_grid, opt_path[-1])
+
+        
 
         return opt_path
             
@@ -192,20 +231,23 @@ class PathPlanner(Node):
 
     def publish_path(self):
 
-        segment_list = SegmentListMsg()
-        for i in self.get_opt_path():
-            segment = SegmentMsg()
-            for seg in self.segments:
-                if i[0] == seg.y_id and i[1] == seg.x_id:
-                    segment.x = seg.x
-                    segment.y = seg.y
-                    segment.z = 0.1
-                    segment.obstacle = False
-                    segment.start = seg.start
-                    break
-            segment_list.segments.append(segment)
+        if self.finished == False:
+            segment_list = SegmentListMsg()
+            for i in self.get_opt_path():
+                segment = SegmentMsg()
+                for seg in self.segments:
+                    if i[0] == seg.y_id and i[1] == seg.x_id:
+                        segment.x = seg.x
+                        segment.y = seg.y
+                        segment.z = 0.1
+                        segment.obstacle = False
+                        segment.start = seg.start
+                        break
+                segment_list.segments.append(segment)
 
-        self.path_publisher.publish(segment_list)
+            self.path_publisher.publish(segment_list)
+
+        self.finished = True
 
 
 def main():

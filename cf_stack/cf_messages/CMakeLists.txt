@@ -18,6 +18,7 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/SegmentMsg.msg"
   "msg/SegmentListMsg.msg"
+  "msg/Path.msg"
   DEPENDENCIES geometry_msgs # Abhängigkeit von geometry_msgs
 )
 
