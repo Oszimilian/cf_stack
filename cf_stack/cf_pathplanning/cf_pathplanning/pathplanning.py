@@ -124,6 +124,7 @@ class PathPlanner(Node):
         return sections
     
     def get_score_of_path(self, path) -> int:
+        if len(path) == 0: return -100000000
         sections : List[List] = self.get_path_sections(path)
         sections.sort(key=len)
         sections.reverse()
@@ -140,10 +141,17 @@ class PathPlanner(Node):
         return score
 
     def get_opt_path(self) -> List:
-        path_a = self.get_path(HeuristicType.HORIZONTAL, self.grid)
-        path_b = self.get_path(HeuristicType.VERTICAL, self.grid)
+        best_path : List = []
+        heuristic = HeuristicType.HORIZONTAL
+        for h in [HeuristicType.HORIZONTAL, HeuristicType.VERTICAL, HeuristicType.MANHATTAN, HeuristicType.CHEBYSHEV]:
+            path = self.get_path(h, self.grid)
+            if self.get_score_of_path(path) > self.get_score_of_path(best_path):
+                best_path = path
+                heuristic = h
+                
+        self.get_logger().info(f'{heuristic}')
 
-        return path_a if self.get_score_of_path(path_a) > self.get_score_of_path(path_b) else path_b
+        return path
 
 
     def publish_path(self):

@@ -35,10 +35,10 @@ class CoveragePlanner():
         # Possible actions performed by the robot
         self.action = [-1, 0, 1, 2]
         self.action_name = ['R', '#', 'L', 'B']  # Right,Forward,Left,Backwards
-        self.action_cost = [.2, .1, .2, .4]
+        self.action_cost = [7.0, 1.0, 7.0, 15.0]
 
         # A star movement cost
-        self.a_star_movement_cost = [1, 1, 1, 1]
+        self.a_star_movement_cost = [7, 1, 7, 15]
 
         # currente position [x, y, orientation (default = 0)]
         self.current_pos = self.get_start_position()
