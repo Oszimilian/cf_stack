@@ -75,7 +75,7 @@ class Visualizer(Node):
         return segment
 
     def ppc_pose_subscriber_callback(self, msg : Point):
-        marker = self.get_segment_marker(segment=self.segment_out_of_point(msg), id=50, size_scale=0.5, rgb=[1.0, 0.0, 0.0])
+        marker = self.get_segment_marker(segment=self.segment_out_of_point(msg), id=50, size_scale=0.2, rgb=[1.0, 0.0, 0.0])
         self.ppc_pose_vis_publisher.publish(marker)
 
     def segment_subscriber_callback(self, msg : SegmentListMsg):
@@ -156,9 +156,9 @@ class Visualizer(Node):
         marker.lifetime.sec = 0
         marker.lifetime.nanosec = 0
 
-        marker.scale.x = self.x_segment_size * 0.5 * size_scale
-        marker.scale.y = self.y_segment_size * 0.5 * size_scale
-        marker.scale.z = 0.1 * size_scale
+        marker.scale.x = self.x_segment_size * size_scale
+        marker.scale.y = self.y_segment_size * size_scale
+        marker.scale.z = 0.05 * size_scale
         marker.header.stamp = self.get_clock().now().to_msg()
 
         return marker

@@ -50,7 +50,7 @@ class PPC(Node):
                                                                     10)
         
         self.fly_subscriber = self.create_subscription( Empty,
-                                                        '/ppc/fly',
+                                                        '/drone/takeoffdone',
                                                         self.fly_callback,
                                                         10)
         

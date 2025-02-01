@@ -38,7 +38,7 @@ class Drone(Node):
                                                 10)
         
         self.takeoff_cmd_subscriber = self.create_subscription( Empty,
-                                                                '/drone/takeoff',
+                                                                '/grid/detect',
                                                                 self.takeoff_cmd_callback,
                                                                 10)
         
@@ -47,7 +47,7 @@ class Drone(Node):
                                                                 10)
         
         self.land_cmd_subscriber = self.create_subscription(    Empty,
-                                                                '/drone/land',
+                                                                '/ppc/flydone',
                                                                 self.land_cmd_callback,
                                                                 10)
         
