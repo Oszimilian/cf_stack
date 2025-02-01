@@ -69,6 +69,10 @@ class Grid(Node):
                                                         '/grid/state',
                                                         10)
         
+        self.detect_publisher = self.create_publisher(  Empty,
+                                                        '/grid/detect',
+                                                        10)
+        
         self.timer = self.create_timer(1.0, self.timer_callback)
 
         self.state_timer = self.create_timer(   0.5,
@@ -182,6 +186,7 @@ class Grid(Node):
             drone_position = self.get_drone_position()
             if self.get_drone_start_index(drone_position=drone_position) == True:
                 self.state = State.CREATE
+                self.detect_publisher.publish(Empty())
             else:
                 self.state = State.ERROR
 
