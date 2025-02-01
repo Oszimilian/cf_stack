@@ -133,7 +133,6 @@ class PathPlanner(Node):
             for section in sections:
                 if len(section) == i and i > 2:
                     score += i
-        self.get_logger().info(f'Score: {score}')
         for section in sections:
             if len(section) > 2:
                 pass
@@ -148,8 +147,7 @@ class PathPlanner(Node):
             if self.get_score_of_path(path) > self.get_score_of_path(best_path):
                 best_path = path
                 heuristic = h
-                
-        self.get_logger().info(f'{heuristic}')
+            
 
         return path
 

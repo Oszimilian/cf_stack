@@ -7,12 +7,20 @@ from cf_messages.msg import SegmentListMsg
 from cf_messages.msg import SegmentMsg
 from geometry_msgs.msg import Point
 from std_msgs.msg import Float32
+from std_msgs.msg import Empty
+from std_msgs.msg import String
+from enum import Enum
 
 @dataclass
 class Pose:
     x : float
     y : float
     is_edge_pose : bool
+
+class State(Enum):
+    IDLE = 0
+    FLY = 1
+    EXIT = 2
 
 
 class PPC(Node):
@@ -41,6 +49,22 @@ class PPC(Node):
                                                                     self.ppc_velocity_callback,
                                                                     10)
         
+        self.fly_subscriber = self.create_subscription( Empty,
+                                                        '/ppc/fly',
+                                                        self.fly_callback,
+                                                        10)
+        
+        self.fly_done_publisher = self.create_publisher(    Empty,
+                                                            '/ppc/flydone',
+                                                            10)
+        
+        self.state_publisher = self.create_publisher(   String,
+                                                        '/ppc/state',
+                                                        10)
+        
+        self.state_timer = self.create_timer(   0.5,
+                                                self.state_callback)
+        
         self.ppc_points : List[Pose] = []
         self.ppc_points_pose : int = 0
 
@@ -57,9 +81,30 @@ class PPC(Node):
         self.ppc_delta_time : float = 0.003
         self.timer = self.create_timer( self.ppc_delta_time,
                                         self.handle_ppc)
+        
+
+        self.state : State = State.IDLE
+
+        self.state_callback()
+
+    def state_callback(self):
+        state_msg = String()
+        match self.state:
+            case State.IDLE:
+                state_msg.data = "IDLE"
+            case State.FLY:
+                state_msg.data = "FLY"
+            case State.EXIT:
+                state_msg.data = "EXIT"
+
+            case _:
+                return
+        self.state_publisher.publish(state_msg)
 
 
-
+    def fly_callback(self, msg : Empty):
+        self.state = State.FLY
+        self.state_callback()
 
     def ppc_velocity_callback(self, msg : Float32):
         self.delta_dist = msg.data * self.ppc_delta_time
@@ -135,22 +180,31 @@ class PPC(Node):
         self.future_points.publish(segments)
 
     def handle_ppc(self):
-        if len(self.local_path_points) == 0 and len(self.main_path_points) >= self.main_path_pose + 1:
-            self.local_path_points = self.get_local_path_points(    self.main_path_points[self.main_path_pose], 
-                                                                    self.main_path_points[self.main_path_pose + 1])
+        if self.state == State.FLY:
+            if len(self.main_path_points) > self.main_path_pose + 1:
+                
+                if len(self.local_path_points) == 0 :
+                    self.local_path_points = self.get_local_path_points(    self.main_path_points[self.main_path_pose], 
+                                                                            self.main_path_points[self.main_path_pose + 1])
+                    
+                    self.main_path_pose += 1
+                    self.local_path_pose = 0
+
+                    if self.main_path_pose + 3 <= len(self.main_path_points):
+                        self.publish_future_points()
+            else:
+                self.state = State.EXIT
+                self.fly_done_publisher.publish(Empty())
+                self.state_callback()
             
-            self.main_path_pose += 1
-            self.local_path_pose = 0
 
-            if self.main_path_pose + 3 <= len(self.main_path_points):
-                self.publish_future_points()
+            if self.local_path_pose < len(self.local_path_points):
+                self.publish_ppc_point(pose=self.local_path_points[self.local_path_pose])
+                self.local_path_pose += 1
 
-        if self.local_path_pose < len(self.local_path_points):
-            self.publish_ppc_point(pose=self.local_path_points[self.local_path_pose])
-            self.local_path_pose += 1
-
-        if self.local_path_pose == len(self.local_path_points):
-            self.local_path_points = []
+            if self.local_path_pose == len(self.local_path_points):
+                self.local_path_points = []
+        
 
 
 
