@@ -35,23 +35,26 @@ class Grid(Node):
         self.declare_parameter(name='y_segment_size', value=0.2)
         self.declare_parameter(name='x_size_offset', value=0.2)
         self.declare_parameter(name='y_size_offset', value=0.2)
+        self.declare_parameter(name='id', value=0)
 
         self.input_grid_path: str = self.get_parameter('input_grid_path').get_parameter_value().string_value
         self.x_segment_size: float = self.get_parameter('x_segment_size').get_parameter_value().double_value
         self.y_segment_size: float = self.get_parameter('y_segment_size').get_parameter_value().double_value
         self.x_size_offset: float = self.get_parameter('x_size_offset').get_parameter_value().double_value
         self.y_size_offset: float = self.get_parameter('y_size_offset').get_parameter_value().double_value
+        self.id : int = self.get_parameter('id').get_parameter_value().integer_value
 
         self.get_logger().info(f"Input Grid Path: {self.input_grid_path}")
         self.get_logger().info(f"X Segment Size: {self.x_segment_size}")
         self.get_logger().info(f"Y Segment Size: {self.y_segment_size}")
         self.get_logger().info(f"X Size Offset: {self.x_size_offset}")
         self.get_logger().info(f"Y Size Offset: {self.y_size_offset}")
+        self.get_logger().info(f"ID: {self.id}")
 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
-        self.tf_name : str = 'cf2'
+        self.tf_name : str = f'cf{int(self.id)}'
 
 
         self.segments : Segment = []
@@ -114,7 +117,7 @@ class Grid(Node):
                     t.transform.translation.z]
         except Exception as ex:
             self.state = State.ERROR
-            return None
+            return []
         
 
     def get_grid_out_of_json_file(  self,
@@ -153,6 +156,8 @@ class Grid(Node):
     
     def get_drone_start_index(self, drone_position : List[float]) -> bool:
         found : bool = False
+
+        if len(drone_position) == 0: return found
 
         for index_y, y in enumerate(self.grid):
             for index_x, x in enumerate(y):

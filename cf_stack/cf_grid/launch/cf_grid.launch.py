@@ -35,11 +35,18 @@ def generate_launch_description():
         description='grid beginns after y size offset'
     )
 
+    id_arg = DeclareLaunchArgument(
+        'id_drone',
+        default_value='0',
+        description='id of the drone'
+    )
+
     input_grid_path = LaunchConfiguration('input_grid_path')
     x_segment_size = LaunchConfiguration('x_segment_size')
     y_segment_size = LaunchConfiguration('y_segment_size')
     x_size_offset = LaunchConfiguration('x_size_offset')
     y_size_offset = LaunchConfiguration('y_size_offset')
+    id = LaunchConfiguration('id_drone')
 
     grid = Node(
         package='cf_grid',
@@ -50,7 +57,8 @@ def generate_launch_description():
             'x_segment_size' : x_segment_size,
             'y_segment_size' : y_segment_size,
             'x_size_offset' : x_size_offset,
-            'y_size_offset' : y_size_offset
+            'y_size_offset' : y_size_offset,
+            'id': id
         }]
     )
 
@@ -62,6 +70,7 @@ def generate_launch_description():
             y_segment_size_arg,
             x_size_offset_arg,
             y_size_offset_arg,
+            id_arg,
             grid
         ]
     )

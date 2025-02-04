@@ -37,6 +37,12 @@ def generate_launch_description():
         description='Grid begins after y size offset'
     )
 
+    id_arg = DeclareLaunchArgument(
+        'id',
+        default_value='0',
+        description='id of the drone and the safeflie'
+    )
+
 
     grid_launch_file = os.path.join(
         get_package_share_directory('cf_grid'),
@@ -85,7 +91,8 @@ def generate_launch_description():
         'x_segment_size': LaunchConfiguration('x_segment_size'),
         'y_segment_size': LaunchConfiguration('y_segment_size'),
         'x_size_offset': LaunchConfiguration('x_size_offset'),
-        'y_size_offset': LaunchConfiguration('y_size_offset')
+        'y_size_offset': LaunchConfiguration('y_size_offset'),
+        'id_drone': LaunchConfiguration('id')
     }.items())
 
     pathplanner_launch = IncludeLaunchDescription(pathplanner_launch_file)
@@ -94,7 +101,10 @@ def generate_launch_description():
 
     ppc_launch = IncludeLaunchDescription(ppc_launch_file)
 
-    drone_launch = IncludeLaunchDescription(drone_launch_file)
+    drone_launch = IncludeLaunchDescription(drone_launch_file, launch_arguments={
+        'id': LaunchConfiguration('id')
+    }.items())
+
 
     velocity_planner_launch = IncludeLaunchDescription(velocity_planner_launch_file)
 
@@ -104,6 +114,7 @@ def generate_launch_description():
     }.items())
 
     return LaunchDescription([
+        id_arg,
         input_grid_path_arg,
         x_segment_size_arg,
         y_segment_size_arg,

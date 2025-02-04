@@ -20,21 +20,25 @@ class Drone(Node):
         super().__init__('Drone')
         self.get_logger().info('Started Drone')
 
+        self.declare_parameter(name='id', value=0)
+        self.id : int = self.get_parameter('id').get_parameter_value().integer_value
+        self.get_logger().info(f"ID: {self.id}")
+
         self.ppc_pos_subscriber = self.create_subscription( Point,
                                                             '/ppc',
                                                             self.ppc_pos_callback,
                                                             10)
         
         self.drone_pos_publisher = self.create_publisher(   SendTarget,
-                                                            '/safeflie2/send_target',
+                                                            f'/safeflie{self.id}/send_target',
                                                             10)
         
         self.takeoff_pub = self.create_publisher(   Empty, 
-                                                    "/safeflie2/takeoff",
+                                                    f"/safeflie{self.id}/takeoff",
                                                     10)
         
         self.land_pub = self.create_publisher(  Empty,
-                                                '/safeflie2/land',
+                                                f"/safeflie{self.id}/land",
                                                 10)
         
         self.takeoff_cmd_subscriber = self.create_subscription( Empty,
