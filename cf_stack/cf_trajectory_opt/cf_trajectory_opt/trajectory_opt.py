@@ -100,7 +100,7 @@ class TrajectoryOpt(Node):
     # 0=>UP 1=> RIGHT 2=>DOWN 3=>LEFT 4=>ERROR 
     def get_opti_points(self, points : List[SegmentMsg], opt_points : List[Tuple[int, List[int]]]) -> SegmentListMsg:
         opt1 : float = 0.1
-        opt2 : float = 0.1
+        opt2 : float = 0.05
         count : int = 0
         segmentList = SegmentListMsg()
         for id, point in enumerate(points):
@@ -109,60 +109,60 @@ class TrajectoryOpt(Node):
                     match opt_points[count][1]:
                         
                         case [0, 3]: # UP - LEFT => DOWN - RIGHT - UP - LEFT
-                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt2))
-                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt2))
-                        case [0, 2]: # UP - DOWN => DOWN - RIGHT - UP - LEFT - DOWN
                             segmentList.segments.append(self.get_adapted_segment(point, 2, opt1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt2))
                             segmentList.segments.append(self.get_adapted_segment(point, 0, opt2))
                             segmentList.segments.append(self.get_adapted_segment(point, 3, opt1))
+                        case [0, 2]: # UP - DOWN => DOWN - RIGHT - UP - LEFT - DOWN
+                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt2))
                             segmentList.segments.append(self.get_adapted_segment(point, 2, opt1))
                         case [0, 1]: # UP - RIGHT => DOWN - LEFT - UP - RIGHT
-                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt2))
-                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt1))
 
                         case [1, 2]: # RIGHT - DOWN => LEFT - UP - RIGHT - DOWN
-                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt2))
-                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt1))
                         case [1, 3]: # RIGTH - LEFT => LEFT - UP - RIGHT - DOWN - LEFT
                             segmentList.segments.append(self.get_adapted_segment(point, 3, opt1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt2))
                             segmentList.segments.append(self.get_adapted_segment(point, 1, opt2))
                             segmentList.segments.append(self.get_adapted_segment(point, 2, opt2))
                             segmentList.segments.append(self.get_adapted_segment(point, 3, opt1))
                         case [1, 0]: # RIGHT - DOWN => LEFT - DOWN - RIGHT - UP
-                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt2))
-                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt1))
 
                         case [2, 3]: # DOWN - LEFT => UP - RIGHT - DOWN - LEFT
-                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt2))
-                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt1))
                         case [2, 0]: # DOWN - UP => UP - RIGHT - DOWN - LEFT - UP
                             segmentList.segments.append(self.get_adapted_segment(point, 0, opt1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt2))
                             segmentList.segments.append(self.get_adapted_segment(point, 2, opt2))
                             segmentList.segments.append(self.get_adapted_segment(point, 3, opt2))
                             segmentList.segments.append(self.get_adapted_segment(point, 0, opt1))
                         case [2, 1]: # DOWN - RIGHT => UP - LEFT - DOWN - RIGHT
-                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt2))
-                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt1))
 
                         case [3, 2]: # LEFT - DOWN => RIGHT - UP - LEFT - DOWN
-                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt2))
-                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt2))
                             segmentList.segments.append(self.get_adapted_segment(point, 2, opt1))
                         case [3, 1]: # LEFT - RIGHT => RIGHT - DOWN - LEFT - UP - RIGHT
                             segmentList.segments.append(self.get_adapted_segment(point, 1, opt1))
@@ -171,10 +171,10 @@ class TrajectoryOpt(Node):
                             segmentList.segments.append(self.get_adapted_segment(point, 0, opt2))
                             segmentList.segments.append(self.get_adapted_segment(point, 1, opt1))
                         case [3, 0]: # LEFT - UP => RIGHT - DOWN - LEFT - UP
-                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt2))
-                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt1))
-                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 1, opt1))
+                            segmentList.segments.append(self.get_adapted_segment(point, 2, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 3, opt2))
+                            segmentList.segments.append(self.get_adapted_segment(point, 0, opt1))
                     count += 1
                 else:
                     segmentList.segments.append(point)

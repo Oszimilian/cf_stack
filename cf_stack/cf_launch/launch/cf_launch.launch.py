@@ -27,13 +27,13 @@ def generate_launch_description():
 
     x_size_offset_arg = DeclareLaunchArgument(
         'x_size_offset',
-        default_value='-1.4',
+        default_value='-0.9',
         description='Grid begins after x size offset'
     )
 
     y_size_offset_arg = DeclareLaunchArgument(
         'y_size_offset',
-        default_value='-1.4',
+        default_value='-0.9',
         description='Grid begins after y size offset'
     )
 

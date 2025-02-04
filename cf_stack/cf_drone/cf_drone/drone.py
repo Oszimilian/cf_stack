@@ -26,15 +26,15 @@ class Drone(Node):
                                                             10)
         
         self.drone_pos_publisher = self.create_publisher(   SendTarget,
-                                                            '/safeflie0/send_target',
+                                                            '/safeflie2/send_target',
                                                             10)
         
         self.takeoff_pub = self.create_publisher(   Empty, 
-                                                    "/safeflie0/takeoff",
+                                                    "/safeflie2/takeoff",
                                                     10)
         
         self.land_pub = self.create_publisher(  Empty,
-                                                '/safeflie0/land',
+                                                '/safeflie2/land',
                                                 10)
         
         self.takeoff_cmd_subscriber = self.create_subscription( Empty,

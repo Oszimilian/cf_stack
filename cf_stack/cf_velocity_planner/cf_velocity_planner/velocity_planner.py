@@ -33,7 +33,7 @@ class VelocityPlanner(Node):
         
         self.target_velocity : float = 0.2
         self.act_velocity : float = 0.2
-        self.velocity_inc : float = 0.01
+        self.velocity_inc : float = 0.03
 
     def get_angle_abc(self, a: SegmentMsg, b: SegmentMsg, c: SegmentMsg) -> float:
         ab_x = b.x - a.x
@@ -55,11 +55,11 @@ class VelocityPlanner(Node):
 
     def get_velocity(self, angle : float) -> float:
         if angle >= 0 and angle < 45.0:
-            return 0.37
+            return 0.25
         elif angle >= 45 and angle < 90:
-            return 0.3
+            return 0.1
         else:
-            return 0.22
+            return 0.2
 
     def future_points_callback(self, msg : SegmentListMsg):
         angle : float = self.get_angle_abc(msg.segments[0], msg.segments[1], msg.segments[2])

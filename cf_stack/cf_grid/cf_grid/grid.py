@@ -51,7 +51,7 @@ class Grid(Node):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
-        self.tf_name : str = 'cf0'
+        self.tf_name : str = 'cf2'
 
 
         self.segments : Segment = []

@@ -5,3 +5,14 @@ ros2 launch cf_launch cf_launch.launch.py input_grid_path:=/home/maximilian/Git/
 
 ros2 launch tha_example tha_framework.launch.py type:=2 backend:=webots id:=0
 ```
+
+## Create Logblock
+```
+# "v -> tab
+# variables: ["range.zrange"]
+ros2 topic pub /cf2/create_log_block crazyflie_interfaces/msg/LogBlock --once
+
+# "d -> tab
+# data == 10
+ros2 topic pub /cf2/log/z_range/start std_msgs/msg/Int16 --once
+```
