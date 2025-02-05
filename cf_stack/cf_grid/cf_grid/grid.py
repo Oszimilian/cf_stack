@@ -53,7 +53,6 @@ class Grid(Node):
 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
-
         self.tf_name : str = f'cf{int(self.id)}'
 
 

@@ -6,6 +6,7 @@ from cf_messages.msg import SegmentMsg
 from std_msgs.msg import Float32
 
 from dataclasses import dataclass
+from typing import List
 import math
 
 @dataclass
@@ -30,6 +31,9 @@ class VelocityPlanner(Node):
         self.ppc_velocity_publisher = self.create_publisher(    Float32,
                                                                 '/ppc/velocity',
                                                                 10)
+        
+        self.timer = self.create_timer( 0.05,
+                                        self.velocity_pub)
         
         self.target_velocity : float = 0.2
         self.act_velocity : float = 0.2
@@ -61,24 +65,71 @@ class VelocityPlanner(Node):
         else:
             return 0.20
 
-    def future_points_callback(self, msg : SegmentListMsg):
-        angle : float = self.get_angle_abc(msg.segments[0], msg.segments[1], msg.segments[2])
+    def get_angles(self, msg: SegmentListMsg, samples: int) -> List[float]:
+        angles: List[float] = []
+
+
+        num_segments = len(msg.segments)
+        if num_segments < 3:
+            return angles
+
+        max_index = min(samples, num_segments) - 2
+        
+        for i in range(max_index):
+            a, b, c = msg.segments[i], msg.segments[i+1], msg.segments[i+2]
+            angles.append(self.get_angle_abc(a=a, b=b, c=c))
+
+        return angles
+    
+    def get_dyn_speed_factor(self, angles : List[float]) -> float:
+        avg_angle : float = sum(angles) / len(angles)
 
         path_angle : Float32 = Float32()
-        path_angle.data = angle
+        path_angle.data = avg_angle
         self.angle_publisher.publish(path_angle)
 
-        self.target_velocity = self.get_velocity(angle)
+        speed_factor : float = 1.0
 
+
+        if avg_angle < 5.0:
+            speed_factor = 0.3
+        elif avg_angle < 25.0: 
+            speed_factor = 0.25
+        elif avg_angle < 45.0:
+            speed_factor = 0.20
+        else:
+            speed_factor = 0.15
+
+
+        return speed_factor
+
+    def velocity_pub(self):
         if self.target_velocity - self.act_velocity > 0:
-            self.act_velocity += self.velocity_inc
-        elif self.target_velocity - self.act_velocity < 0:
-            self.act_velocity = self.target_velocity
-
+            self.act_velocity += 0.001
+        else: 
+            self.act_velocity -= 0.001
 
         ppc_velocity : Float32 = Float32()
         ppc_velocity.data = self.act_velocity
         self.ppc_velocity_publisher.publish(ppc_velocity)
+
+    def future_points_callback(self, msg : SegmentListMsg):
+
+        angles : List[float] = self.get_angles(msg=msg, samples=len(msg.segments))
+        
+
+        speed_factor : float = self.get_dyn_speed_factor(angles=angles)
+
+        self.get_logger().info(' ')
+        self.get_logger().info(f'{sum(angles) / len(angles)}')
+        self.get_logger().info(f'{speed_factor}')
+
+        self.target_velocity = speed_factor
+
+
+
+
+
         
 
 def main():

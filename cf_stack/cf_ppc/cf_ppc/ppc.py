@@ -162,13 +162,17 @@ class PPC(Node):
         point = Point()
         point.x = pose.x
         point.y = pose.y
-        point.z = 0.1
+        point.z = 1.0
         self.ppc_publisher.publish(point)
 
-    def publish_future_points(self):
-        future_poses : List[Pose] = [   self.main_path_points[self.main_path_pose],
-                                        self.main_path_points[self.main_path_pose + 1],
-                                        self.main_path_points[self.main_path_pose + 2],]
+    def publish_future_points(self, depth : int):
+        future_poses : List[Pose] = []
+
+        if depth + self.main_path_pose > len(self.main_path_points):
+            return 
+        
+        for i in range(depth):
+            future_poses.append(self.main_path_points[self.main_path_pose + i])
 
         segments = SegmentListMsg()
         for pose in future_poses:
@@ -190,8 +194,8 @@ class PPC(Node):
                     self.main_path_pose += 1
                     self.local_path_pose = 0
 
-                    if self.main_path_pose + 3 <= len(self.main_path_points):
-                        self.publish_future_points()
+
+                    self.publish_future_points(depth=7)
             else:
                 self.state = State.EXIT
                 self.fly_done_publisher.publish(Empty())

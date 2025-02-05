@@ -5,6 +5,8 @@ from cf_messages.msg import SegmentMsg
 from dataclasses import dataclass
 from typing import List, Dict
 from cf_pathplanning.coverage_planner import CoveragePlanner, HeuristicType
+from collections import deque
+import copy
 
 @dataclass
 class PathPlanningSegment:
@@ -36,13 +38,42 @@ class PathPlanner(Node):
 
         self.cp_heuristics = [HeuristicType.HORIZONTAL]
         self.orientations = [0, 1, 2, 3]
+
+    def shortest_path(self, grid):
+        rows, cols = len(grid), len(grid[0])
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
         
-
-
-    def segment_list_callback(self, msg: SegmentListMsg):
-        self.grid.clear()
-        self.segments.clear()
-
+        start, end = None, None
+        for r in range(rows):
+            for c in range(cols):
+                if grid[r][c] == 2:
+                    start = (r, c)
+                elif grid[r][c] == 3:
+                    end = (r, c)
+        
+        if not start or not end:
+            return None
+        
+        queue = deque([(start[0], start[1], [])])
+        visited = set()
+        visited.add(start)
+        
+        while queue:
+            r, c, path = queue.popleft()
+            path = path + [(r, c)]
+            
+            if (r, c) == end:
+                return path
+            
+            for dr, dc in directions:
+                nr, nc = r + dr, c + dc
+                if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] != 1 and (nr, nc) not in visited:
+                    queue.append((nr, nc, path))
+                    visited.add((nr, nc))
+        
+        return []
+        
+    def transform_grid_msg_to_grid(self, msg: SegmentListMsg):
         a = {}
 
         for segment in msg.segments:
@@ -54,10 +85,13 @@ class PathPlanner(Node):
         for key in a:
             a[key].sort(key=lambda item: item[0])
         sorted_keys = sorted(a.keys())
+        
+        self.create_id_grid(grid=sorted_keys, sorted_segments=a)
 
-        for y_id, y in enumerate(sorted_keys):
+    def create_id_grid(self, grid : Dict, sorted_segments : Dict):
+        for y_id, y in enumerate(grid):
             y_line : List[int] = []
-            for x_id, value in enumerate(a[y]):
+            for x_id, value in enumerate(sorted_segments[y]):
                 x, obstacle,start, z = value
                 pps = PathPlanningSegment(x=x, y=y, z=z, x_id=x_id, y_id=y_id, obstacle=obstacle, start=start)
                 self.segments.append(pps)
@@ -70,7 +104,17 @@ class PathPlanner(Node):
                     y_line.append(0)
             self.grid.append(y_line)
 
-        self.publish_path()
+    def segment_list_callback(self, msg: SegmentListMsg):
+        self.grid.clear()
+        self.segments.clear()
+
+        self.transform_grid_msg_to_grid(msg=msg)
+
+        coverage_path = self.get_opt_path()
+
+        full_coverage_path = self.get_opt_full_path(path_coverage=coverage_path)
+
+        self.publish_path(path=full_coverage_path)
 
     def get_path(self, heuristic, grid) -> List:
         compare_tb = []
@@ -93,7 +137,6 @@ class PathPlanner(Node):
         return value < epsilon and value > -epsilon
     
     def get_act_angle(self, act_pos : List, next_pos : List) -> float:
-        #self.get_logger().info(f'{act_pos} ==> {next_pos}')
         x_diff : float = next_pos[0] - act_pos[0]
         y_diff : float = next_pos[1] - act_pos[1]
         if x_diff > 0 and self.is_close_to_zero(y_diff):
@@ -150,12 +193,27 @@ class PathPlanner(Node):
             
 
         return path
+    
+    def get_opt_full_path(self, path_coverage : List) -> List:
+        start = path_coverage[0]
+        end = path_coverage[-1]
+
+        tmp_grid = copy.copy(self.grid)
+
+        tmp_grid[start[1]][start[0]] = 3
+        tmp_grid[end[1]][end[0]] = 2
+
+        back_path = self.shortest_path(grid=tmp_grid)
+        if len(back_path) > 2:
+            return path_coverage + back_path[1:]
+        else:
+            return path_coverage
 
 
-    def publish_path(self):
+    def publish_path(self, path : List = []):
 
         segment_list = SegmentListMsg()
-        for i in self.get_opt_path():
+        for i in path:
             segment = SegmentMsg()
             for seg in self.segments:
                 if i[0] == seg.y_id and i[1] == seg.x_id:

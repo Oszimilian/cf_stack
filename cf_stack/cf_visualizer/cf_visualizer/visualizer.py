@@ -66,6 +66,19 @@ class Visualizer(Node):
         self.ppc_pose_vis_publisher = self.create_publisher(    Marker,
                                                                 '/ppc/vis',
                                                                 10)
+        
+        self.drone_pos_vis_publisher = self.create_publisher(   Marker,
+                                                                '/drone/vis',
+                                                                10)
+        
+        self.drone_pos_subscriber = self.create_subscription(   Point,
+                                                                '/drone/pos',
+                                                                self.drone_pos_callback,
+                                                                10)
+
+    def drone_pos_callback(self, msg : Point):
+        marker = self.get_segment_marker(segment=self.segment_out_of_point(msg), id=50, size_scale=0.2, rgb=[1.0, 0.5, 1.0])
+        self.drone_pos_vis_publisher.publish(marker)
 
     def segment_out_of_point(self, point : Point) -> SegmentMsg:
         segment = SegmentMsg()
@@ -82,7 +95,7 @@ class Visualizer(Node):
 
         marker_array = MarkerArray()
         for id, segment in enumerate(msg.segments):
-            marker_array.markers.append(self.get_segment_marker(segment, id))
+            marker_array.markers.append(self.get_segment_marker(segment, id, size_scale=0.9, rgb=[0.0, 1.0, 0.0]))
 
         self.segment_vis_publisher.publish(marker_array)
 
@@ -96,7 +109,7 @@ class Visualizer(Node):
         inc_step : float = 0.3 / len(msg.segments)
         inc : float = 0
         for seg in msg.segments:
-            path.poses.append(self.get_path_pose(seg, z_offset=0.0))
+            path.poses.append(self.get_path_pose(seg, z_offset=1.0))
             inc += inc_step
 
         self.path_opt_vis_publisher.publish(path)
@@ -112,7 +125,7 @@ class Visualizer(Node):
 
         self.path_vis_publisher.publish(path)
 
-    def get_path_pose(self, segment : SegmentMsg, z_offset : float = 0) -> PoseStamped:
+    def get_path_pose(self, segment : SegmentMsg, z_offset : float = 1.0) -> PoseStamped:
         pose = PoseStamped()
 
         pose.header.frame_id = 'world'
