@@ -86,6 +86,12 @@ def generate_launch_description():
         'cf_velocity_planner.launch.py'
     )
 
+    sampling_launch_file = os.path.join(
+        get_package_share_directory('cf_sampling'),
+        'launch',
+        'cf_sampling.launch.py'
+    )
+
     grid_launch = IncludeLaunchDescription(grid_launch_file, launch_arguments={
         'input_grid_path': LaunchConfiguration('input_grid_path'),
         'x_segment_size': LaunchConfiguration('x_segment_size'),
@@ -113,6 +119,8 @@ def generate_launch_description():
         'y_segment_size': LaunchConfiguration('y_segment_size')
     }.items())
 
+    sampling_launch = IncludeLaunchDescription(sampling_launch_file)
+
     return LaunchDescription([
         id_arg,
         input_grid_path_arg,
@@ -126,5 +134,6 @@ def generate_launch_description():
         trayjectory_launch,
         ppc_launch,
         drone_launch,
-        velocity_planner_launch
+        velocity_planner_launch,
+        sampling_launch
     ])
