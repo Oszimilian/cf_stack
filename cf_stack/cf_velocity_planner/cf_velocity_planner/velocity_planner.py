@@ -120,9 +120,6 @@ class VelocityPlanner(Node):
 
         speed_factor : float = self.get_dyn_speed_factor(angles=angles)
 
-        self.get_logger().info(' ')
-        self.get_logger().info(f'{sum(angles) / len(angles)}')
-        self.get_logger().info(f'{speed_factor}')
 
         self.target_velocity = speed_factor
 

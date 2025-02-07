@@ -95,7 +95,7 @@ class Visualizer(Node):
 
         marker_array = MarkerArray()
         for id, segment in enumerate(msg.segments):
-            marker_array.markers.append(self.get_segment_marker(segment, id, size_scale=0.9, rgb=[0.0, 1.0, 0.0]))
+            marker_array.markers.append(self.get_segment_marker(segment, id, size_scale=0.9))
 
         self.segment_vis_publisher.publish(marker_array)
 

@@ -200,10 +200,13 @@ class PathPlanner(Node):
 
         tmp_grid = copy.copy(self.grid)
 
-        tmp_grid[start[1]][start[0]] = 3
-        tmp_grid[end[1]][end[0]] = 2
+
+        tmp_grid[start[0]][start[1]] = 3
+        tmp_grid[end[0]][end[1]] = 2
 
         back_path = self.shortest_path(grid=tmp_grid)
+
+
         if len(back_path) > 2:
             return path_coverage + back_path[1:]
         else:

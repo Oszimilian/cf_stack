@@ -20,7 +20,8 @@ class Pose:
 class State(Enum):
     IDLE = 0
     FLY = 1
-    EXIT = 2
+    WAIT_EXIT = 2
+    EXIT = 3
 
 
 class PPC(Node):
@@ -65,6 +66,9 @@ class PPC(Node):
         self.state_timer = self.create_timer(   0.5,
                                                 self.state_callback)
         
+        self.wait_timer = self.create_timer(    3,
+                                                self.wait_timer)
+        
         self.ppc_points : List[Pose] = []
         self.ppc_points_pose : int = 0
 
@@ -84,8 +88,20 @@ class PPC(Node):
         
 
         self.state : State = State.IDLE
+        self.wait_done = False
 
         self.state_callback()
+
+    def wait_timer(self):
+        if self.state == State.WAIT_EXIT:
+            if self.wait_done == False: 
+                self.wait_done = True
+            else:
+                self.state = State.EXIT
+                
+        elif self.state == State.EXIT:
+            self.fly_done_publisher.publish(Empty())
+            self.state_callback()
 
     def state_callback(self):
         state_msg = String()
@@ -196,10 +212,10 @@ class PPC(Node):
 
 
                     self.publish_future_points(depth=7)
-            else:
-                self.state = State.EXIT
-                self.fly_done_publisher.publish(Empty())
-                self.state_callback()
+            #else:
+            #    self.state = State.EXIT
+            #    self.fly_done_publisher.publish(Empty())
+            #    self.state_callback()
             
 
             if self.local_path_pose < len(self.local_path_points):
@@ -208,6 +224,9 @@ class PPC(Node):
 
             if self.local_path_pose == len(self.local_path_points):
                 self.local_path_points = []
+                if len(self.main_path_points) <= self.main_path_pose + 1:
+                    self.state = State.WAIT_EXIT
+
         
 
 
