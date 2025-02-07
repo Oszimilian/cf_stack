@@ -1,6 +1,7 @@
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
 from cf_messages.msg import SegmentMsg
+import math
 
 
 class Segment:
@@ -8,14 +9,19 @@ class Segment:
                     x_pos : float,
                     y_pos : float,
                     z_pos : float,
+                    x_size : float,
+                    y_size : float,
                     obstacle : bool,
                     start : bool):
         
         self.x_pos : float = x_pos
         self.y_pos : float = y_pos
         self.z_pos : float = z_pos
+        self.x_size : float = x_size
+        self.y_size : float = y_size
         self.start : float = start
         self.obstacle : bool = obstacle
+        self.measure_distance : float = 100000000
 
 
     def __str__(self):
@@ -30,5 +36,23 @@ class Segment:
         segment.obstacle = self.obstacle
         segment.start = self.start
         return segment
-
     
+    def is_in_segment(self, x : float, y : float) -> bool:
+        if x < (self.x_pos - (self.x_size / 2)) and x > (self.x_pos + (self.x_size / 2)):
+            return False
+        if y < (self.y_pos - (self.y_size / 2)) and y > (self.y_pos + (self.y_size / 2)):
+            return False
+        return True
+    
+    def get_distance(self, x : float, y : float):
+        x_diff = abs(self.x_pos - x)
+        y_diff = abs(self.y_pos - y)
+
+        return math.sqrt(math.pow(x_diff, 2), math.pow(y_diff, 2))
+
+    def set_new_z(self, x : float, y : float, z : float):
+        if self.set_new_z(x=x, y=y):
+            dist : float = self.get_distance(x=x, y=y)
+            if dist < self.measure_distance:
+                self.measure_distance = dist
+                self.z_pos = z

@@ -80,6 +80,7 @@ class Grid(Node):
         self.state_timer = self.create_timer(   0.5,
                                                 self.state_callback)
 
+
         self.start_x : int = 0
         self.start_y : int = 0
 
@@ -104,7 +105,9 @@ class Grid(Node):
         self.state_publisher.publish(state_msg)
 
     def z_meassure_callback(self, msg : Point):
-        pass
+        for section in self.segments:
+            section. set_new_z(x=msg.x, y=msg.y, z=msg.z)
+        
 
     def get_drone_position(self) -> List[float]:
         try:
@@ -147,6 +150,8 @@ class Grid(Node):
                 segment : Segment = Segment(    x_pos=(self.x_segment_size * index_x) + self.x_size_offset + (self.x_segment_size / 2),
                                                 y_pos=(self.y_segment_size * index_y) + self.y_size_offset + (self.y_segment_size / 2),
                                                 z_pos=0.0,
+                                                x_size=self.x_segment_size,
+                                                y_size=self.y_segment_size,
                                                 obstacle=seg,
                                                 start=True if index_x == self.start_x and index_y == self.start_y else False)
                 
