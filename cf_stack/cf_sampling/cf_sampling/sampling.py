@@ -54,10 +54,10 @@ class Sampling(Node):
     def z_range_callback(self,msg):
         z_pos = Point()
         pos = self.get_drone_position()
-        if len(pos) > 0:
+        if len(pos) > 0 and abs(msg.values[1]) < 2.0 and abs(msg.values[2]) < 2.0:
             z_pos.x = pos[0]
             z_pos.y = pos[1]
-            z_pos.z = (1000.0 - msg.values[0]) / 1000.0
+            z_pos.z = (pos[2] * 1000.0 - msg.values[0] - 35.0) / 1000.0
             self.z_publisher.publish(z_pos)
 
     def get_drone_position(self) -> List[float]:
@@ -75,7 +75,7 @@ class Sampling(Node):
     def timer_callback(self):
         if self.state == State.CREAT_LOG_BLOGS:
             log_block_msg = LogBlock()
-            log_block_msg.variables = ['range.zrange']
+            log_block_msg.variables = ['range.zrange', 'gyro.x', 'gyro.y', 'acc.z']
             log_block_msg.name = 'z'
             self.create_z_logblock_publisher.publish(log_block_msg)
             self.state = State.WAIT1
@@ -85,7 +85,7 @@ class Sampling(Node):
             self.state = State.START_LOG_BLOGS
         elif self.state == State.START_LOG_BLOGS:
             sample_rate = Int16()
-            sample_rate.data = 10
+            sample_rate.data = 15
             self.start_z_logblock_publisher.publish(sample_rate)
             self.state = State.MEASURE
         

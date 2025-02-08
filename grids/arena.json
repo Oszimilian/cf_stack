@@ -2,7 +2,7 @@
     "arena": {
       "size": 9,
       "segments": [
-        [{"obstacle": false}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}, {"obstacle": true}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}],
+        [{"obstacle": false}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}],
         [{"obstacle": false}, {"obstacle": false}, {"obstacle": true}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}],
         [{"obstacle": false}, {"obstacle": false}, {"obstacle": false}, {"obstacle": true}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}], 
         [{"obstacle": false}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}, {"obstacle": false}],

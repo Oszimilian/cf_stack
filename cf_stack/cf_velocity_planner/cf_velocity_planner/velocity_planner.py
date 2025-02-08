@@ -92,11 +92,11 @@ class VelocityPlanner(Node):
 
 
         if avg_angle < 5.0:
-            speed_factor = 0.42
-        elif avg_angle < 10.0:
             speed_factor = 0.38
-        elif avg_angle < 15.0:
+        elif avg_angle < 10.0:
             speed_factor = 0.35
+        elif avg_angle < 15.0:
+            speed_factor = 0.32
         elif avg_angle < 25.0: 
             speed_factor = 0.30
         elif avg_angle < 35.0:
