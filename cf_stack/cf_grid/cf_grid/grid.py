@@ -106,7 +106,7 @@ class Grid(Node):
 
     def z_meassure_callback(self, msg : Point):
         for section in self.segments:
-            section. set_new_z(x=msg.x, y=msg.y, z=msg.z)
+            section.set_new_z(x=msg.x, y=msg.y, z=msg.z)
         
 
     def get_drone_position(self) -> List[float]:

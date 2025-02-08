@@ -157,7 +157,7 @@ class Visualizer(Node):
 
         if len(rgb) == 0:
             marker.color.r = 1.0 if segment.obstacle else 0.0
-            marker.color.g = 1.0
+            marker.color.g = segment.z * 5
             marker.color.b = 1.0 if segment.start else 0.0
             marker.color.a = 1.0
         else:
@@ -171,7 +171,7 @@ class Visualizer(Node):
 
         marker.scale.x = self.x_segment_size * size_scale
         marker.scale.y = self.y_segment_size * size_scale
-        marker.scale.z = 0.05 * size_scale
+        marker.scale.z = 0.02 * size_scale
         marker.header.stamp = self.get_clock().now().to_msg()
 
         return marker

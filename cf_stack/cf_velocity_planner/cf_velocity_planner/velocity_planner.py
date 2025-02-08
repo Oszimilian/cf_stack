@@ -59,7 +59,7 @@ class VelocityPlanner(Node):
 
     def get_velocity(self, angle : float) -> float:
         if angle >= 0 and angle < 44.0:
-            return 0.30
+            return 0.40
         elif angle >= 44 and angle < 90:
             return 0.10
         else:
@@ -92,9 +92,15 @@ class VelocityPlanner(Node):
 
 
         if avg_angle < 5.0:
+            speed_factor = 0.42
+        elif avg_angle < 10.0:
             speed_factor = 0.38
+        elif avg_angle < 15.0:
+            speed_factor = 0.35
         elif avg_angle < 25.0: 
-            speed_factor = 0.28
+            speed_factor = 0.30
+        elif avg_angle < 35.0:
+            speed_factor = 0.25
         elif avg_angle < 45.0:
             speed_factor = 0.20
         else:

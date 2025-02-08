@@ -2,7 +2,7 @@ from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
 from cf_messages.msg import SegmentMsg
 import math
-
+from typing import List
 
 class Segment:
     def __init__(   self,
@@ -22,6 +22,7 @@ class Segment:
         self.start : float = start
         self.obstacle : bool = obstacle
         self.measure_distance : float = 100000000
+        self.z_samples : List[float] = []
 
 
     def __str__(self):
@@ -32,15 +33,16 @@ class Segment:
         segment = SegmentMsg()
         segment.x = self.x_pos
         segment.y = self.y_pos
-        segment.z = self.z_pos
+        segment.z = 0.0 if len(self.z_samples) == 0 else sum(self.z_samples) / len(self.z_samples)
         segment.obstacle = self.obstacle
         segment.start = self.start
         return segment
     
     def is_in_segment(self, x : float, y : float) -> bool:
-        if x < (self.x_pos - (self.x_size / 2)) and x > (self.x_pos + (self.x_size / 2)):
+        if self.obstacle == True or self.start == True : return False
+        if x < (self.x_pos - (self.x_size / 2)) or x > (self.x_pos + (self.x_size / 2)):
             return False
-        if y < (self.y_pos - (self.y_size / 2)) and y > (self.y_pos + (self.y_size / 2)):
+        if y < (self.y_pos - (self.y_size / 2)) or y > (self.y_pos + (self.y_size / 2)):
             return False
         return True
     
@@ -48,11 +50,13 @@ class Segment:
         x_diff = abs(self.x_pos - x)
         y_diff = abs(self.y_pos - y)
 
-        return math.sqrt(math.pow(x_diff, 2), math.pow(y_diff, 2))
+        return math.sqrt(math.pow(x_diff, 2) + math.pow(y_diff, 2))
 
     def set_new_z(self, x : float, y : float, z : float):
-        if self.set_new_z(x=x, y=y):
-            dist : float = self.get_distance(x=x, y=y)
-            if dist < self.measure_distance:
-                self.measure_distance = dist
-                self.z_pos = z
+        if self.is_in_segment(x=x, y=y):
+            if z > 0.07:
+                self.z_samples.append(z)
+            #dist : float = self.get_distance(x=x, y=y)
+            #if dist < self.measure_distance:
+            #    self.measure_distance = dist
+            #    self.z_pos = z

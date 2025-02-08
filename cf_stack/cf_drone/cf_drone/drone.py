@@ -75,6 +75,9 @@ class Drone(Node):
         self.drone_pos_timer = self.create_timer(   0.02,
                                                     self.pos_callback)
         
+        self.start_delay_timer = self.create_timer( 5.0,
+                                                    self.start_delay_callback)
+        
         self.pos_publisher= self.create_publisher(   Point,
                                                             '/drone/pos',
                                                             10)
@@ -122,25 +125,21 @@ class Drone(Node):
                 return
         self.state_publisher.publish(state_msg)
 
+    def start_delay_callback(self):
+        if self.state == State.TAKEOFF:
+            self.state = State.FLY
+            self.takeoff_done_publisher.publish(Empty())
+        elif self.state == State.LAND:
+            self.state = State.EXIT
+            self.land_pub.publish(Empty())
+
     def takeoff_cmd_callback(self, msg : Empty):
         self.state = State.TAKEOFF
         self.takeoff_pub.publish(Empty())
-        self.timer = self.create_timer( 5.0, self.timer_callback)
-        self.state_callback()
-        
-    def timer_callback(self):
-        if self.state == State.TAKEOFF:
-            self.takeoff_done_publisher.publish(Empty())
-            self.state = State.FLY
-        elif self.state == State.LAND:
-            self.state = State.EXIT
-            self.get_logger().info("")
-        self.state_callback()
+
 
     def land_cmd_callback(self, msg : Empty):
         self.state = State.LAND
-        self.land_pub.publish(Empty())
-        self.timer = self.create_timer( 5.0, self.timer_callback)
         self.state_callback()
 
         

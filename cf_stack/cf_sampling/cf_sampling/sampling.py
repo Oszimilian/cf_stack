@@ -7,6 +7,8 @@ from geometry_msgs.msg import Point
 from typing import List
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
+from rclpy.qos import QoSProfile, QoSDurabilityPolicy
+from crazyflie_interfaces.msg import GenericLogData
 
 class State(Enum):
     CREAT_LOG_BLOGS = 1
@@ -14,6 +16,7 @@ class State(Enum):
     WAIT2 = 3
     START_LOG_BLOGS = 4
     MEASURE = 5
+    ERROR = 6
 
 class Sampling(Node):
     def __init__(self):
@@ -24,42 +27,43 @@ class Sampling(Node):
                                         self.timer_callback)
         
         self.id = 'cf2'
+
         
         self.create_z_logblock_publisher = self.create_publisher(   LogBlock,
                                                                     f'/{self.id}/create_log_block',
                                                                     10)
         
         self.start_z_logblock_publisher = self.create_publisher(    Int16,
-                                                                    f'/{self.id}/log/z_range/start',
-                                                                    10)
+                                                                    f'/{self.id}/log/z/start',
+                                                                    QoSProfile(depth=10, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL))
 
         self.state : State = State.CREAT_LOG_BLOGS
 
-        self.z_range_subscriber = self.create_subscription(    LogBlock,
-                                                               f'/{self.id}/log/z_range/data',
+        self.z_range_subscriber = self.create_subscription(    GenericLogData,
+                                                               f'/{self.id}/log/z/data',
                                                                self.z_range_callback,
                                                                10)
+
         self.z_publisher = self.create_publisher(   Point,
                                                     '/grid/z',
                                                     10)
         
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
-        self.z_publisher = self.create_publisher(Point, '/grid/z', 10)
 
-    def z_range_callback(self, msg):
+    def z_range_callback(self,msg):
         z_pos = Point()
         pos = self.get_drone_position()
         if len(pos) > 0:
             z_pos.x = pos[0]
             z_pos.y = pos[1]
-            z_pos.z = msg.values[0]
+            z_pos.z = (1000.0 - msg.values[0]) / 1000.0
             self.z_publisher.publish(z_pos)
 
     def get_drone_position(self) -> List[float]:
         try:
             t = self.tf_buffer.lookup_transform('world', 
-                                                self.tf_name,
+                                                self.id,
                                                 rclpy.time.Time())
             return [t.transform.translation.x,
                     t.transform.translation.y,
@@ -72,7 +76,7 @@ class Sampling(Node):
         if self.state == State.CREAT_LOG_BLOGS:
             log_block_msg = LogBlock()
             log_block_msg.variables = ['range.zrange']
-            log_block_msg.name = 'z_range'
+            log_block_msg.name = 'z'
             self.create_z_logblock_publisher.publish(log_block_msg)
             self.state = State.WAIT1
         elif self.state == State.WAIT1:
