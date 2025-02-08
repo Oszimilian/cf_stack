@@ -3,6 +3,10 @@ from rclpy.node import Node
 from enum import Enum
 from crazyflie_interfaces.msg import LogBlock
 from std_msgs.msg import Int16
+from geometry_msgs.msg import Point
+from typing import List
+from tf2_ros.buffer import Buffer
+from tf2_ros.transform_listener import TransformListener
 
 class State(Enum):
     CREAT_LOG_BLOGS = 1
@@ -30,6 +34,39 @@ class Sampling(Node):
                                                                     10)
 
         self.state : State = State.CREAT_LOG_BLOGS
+
+        self.z_range_subscriber = self.create_subscription(    LogBlock,
+                                                               f'/{self.id}/log/z_range/data',
+                                                               self.z_range_callback,
+                                                               10)
+        self.z_publisher = self.create_publisher(   Point,
+                                                    '/grid/z',
+                                                    10)
+        
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
+        self.z_publisher = self.create_publisher(Point, '/grid/z', 10)
+
+    def z_range_callback(self, msg):
+        z_pos = Point()
+        pos = self.get_drone_position()
+        if len(pos) > 0:
+            z_pos.x = pos[0]
+            z_pos.y = pos[1]
+            z_pos.z = msg.values[0]
+            self.z_publisher.publish(z_pos)
+
+    def get_drone_position(self) -> List[float]:
+        try:
+            t = self.tf_buffer.lookup_transform('world', 
+                                                self.tf_name,
+                                                rclpy.time.Time())
+            return [t.transform.translation.x,
+                    t.transform.translation.y,
+                    t.transform.translation.z]
+        except Exception as ex:
+            self.state = State.ERROR
+            return []
 
     def timer_callback(self):
         if self.state == State.CREAT_LOG_BLOGS:
