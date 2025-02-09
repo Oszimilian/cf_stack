@@ -15,21 +15,35 @@ class TrajectoryOpt(Node):
         super().__init__("TrajectoryOpt")
         self.get_logger().info("Started TrajectoryOpt")
 
+        # subscriber for the not opt path
         self.path_subscriber = self.create_subscription(    SegmentListMsg,
                                                             '/path', 
                                                             self.path_callback,
                                                             10)
         
+        # publisher for the opt-path
         self.trajectory_opt_publisher = self.create_publisher(  SegmentListMsg,
                                                               '/path/opt',
                                                               10)
     
 
     def get_sub_path(self, points : List[SegmentMsg], start_pos : int) -> List[SegmentMsg]:
+        """!
+        This function returns future 3 path-point of the path starting from a start-position
+        @param points path
+        @param start_pos start-position in the path
+        @return 3 path-segements or none 
+        """
         if len(points) < start_pos + 3: return None
         return points[start_pos:start_pos + 3]
     
     def get_movement(self, x_diff : float, y_diff : float) -> int:
+        """!
+        This function returns the movement between two points based on the difference of x and y
+        @param x_diff x difference between two points
+        @param y_diff y difference between two points
+        @return directions 0 UP - 1 RIGHT - 2 DOWN - 3 LEFT - 4 ELSE
+        """
         if x_diff == 0 and y_diff > 0:
             return 2
         elif x_diff == 0 and y_diff < 0:
@@ -43,6 +57,11 @@ class TrajectoryOpt(Node):
     
     # 0=>UP 1=> RIGHT 2=>DOWN 3=>LEFT 4=>ERROR 
     def get_sub_path_movements(self, points : List[SegmentMsg]) -> List[int]:
+        """!
+        This function return the movement of a subpath with the length 3
+        @param points sub-path
+        @return list of movements (2 movements in this case)
+        """
         if len(points) > 3: return []
         movements : List[int] = []
 
@@ -64,6 +83,11 @@ class TrajectoryOpt(Node):
 
 
     def get_opt_points(self, points : List[SegmentMsg]) -> List[Tuple[int, List[int]]]:
+        """!
+        This function returns a list of path-points which must optimised
+        @param points list of points
+        @return list of path-points which must be optimised, this inclues the typ of point (12 cases)
+        """
         opt_points : List[Tuple[int, List[int]]] = []
         for id, point in enumerate(points):
             sub_path = self.get_sub_path(points=points, start_pos=id)
@@ -78,8 +102,14 @@ class TrajectoryOpt(Node):
         return opt_points
     
     def get_adapted_segment(self, old_segment : SegmentMsg, pos : int, scale : float) -> SegmentMsg:
+        """!
+        This function returns a new-path-point which is modified in one of four directions
+        @param old_segment segemnt which has to be modified
+        @param pos direction for modification
+        @param scale lenght of modification
+        @return new path-point
+        """
         segment = SegmentMsg()
-        
         segment.x = old_segment.x
         segment.y = old_segment.y
         segment.z = old_segment.z
@@ -99,6 +129,12 @@ class TrajectoryOpt(Node):
     
     # 0=>UP 1=> RIGHT 2=>DOWN 3=>LEFT 4=>ERROR 
     def get_opti_points(self, points : List[SegmentMsg], opt_points : List[Tuple[int, List[int]]]) -> SegmentListMsg:
+        """!
+        This function goes through the path and insertes optimised points in corners
+        @param points 
+        @param points which has to be optimised
+        @return new path
+        """
         opt1 : float = 0.1
         opt2 : float = 0.03
         opt3 : float = 0.05
@@ -184,11 +220,22 @@ class TrajectoryOpt(Node):
         return segmentList
     
     def get_distance(self, point_a : SegmentMsg, point_b : SegmentMsg) -> float:
+        """!
+        This function returns the distance between two points
+        @param point_a point_a
+        @param point_b point_b
+        @return distance
+        """
         x_diff : float = point_b.x - point_a.x
         y_diff : float = point_b.y - point_a.y
         return math.sqrt(math.pow(x_diff, 2) + math.pow(y_diff, 2))
                     
     def remove_near_points(self, segments: SegmentListMsg) -> SegmentListMsg:
+        """!
+        This function removes points with a very low distance to each other from the path.
+        @param segements path
+        @param new path
+        """
         rmv_point_ids: List[int] = []
         new_segments = SegmentListMsg()
         for idx, point in enumerate(segments.segments):
@@ -203,6 +250,9 @@ class TrajectoryOpt(Node):
         return new_segments
 
     def path_callback(self, msg : SegmentListMsg):
+        """!
+        callback wich takes the not optimized path and publishes a new path
+        """
         opt_points : List[Tuple[int, List[int]]] = self.get_opt_points(points=msg.segments)
         new_points : SegmentListMsg = self.get_opti_points(points=msg.segments, opt_points=opt_points)
         new_points = self.remove_near_points(new_points)
