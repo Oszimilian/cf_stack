@@ -39,7 +39,7 @@ def generate_launch_description():
 
     id_arg = DeclareLaunchArgument(
         'id',
-        default_value='2',
+        default_value='0',
         description='id of the drone and the safeflie'
     )
 
@@ -119,7 +119,9 @@ def generate_launch_description():
         'y_segment_size': LaunchConfiguration('y_segment_size')
     }.items())
 
-    sampling_launch = IncludeLaunchDescription(sampling_launch_file)
+    sampling_launch = IncludeLaunchDescription(sampling_launch_file, launch_arguments={
+        'id': LaunchConfiguration('id')
+    }.items())
 
     return LaunchDescription([
         id_arg,

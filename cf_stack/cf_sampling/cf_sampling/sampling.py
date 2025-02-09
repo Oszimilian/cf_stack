@@ -26,7 +26,12 @@ class Sampling(Node):
         self.timer = self.create_timer( 0.5,
                                         self.timer_callback)
         
-        self.id = 'cf2'
+        self.declare_parameter(name='id', value=0)
+        self.id_param : int = self.get_parameter('id').get_parameter_value().integer_value
+        
+        
+        self.id = f'cf{self.id_param}'
+        self.get_logger().info(f"ID: {self.id}")
 
         
         self.create_z_logblock_publisher = self.create_publisher(   LogBlock,
@@ -53,6 +58,7 @@ class Sampling(Node):
 
     def z_range_callback(self,msg):
         z_pos = Point()
+        if len(msg.values) < 3: return
         pos = self.get_drone_position()
         if len(pos) > 0 and abs(msg.values[1]) < 2.0 and abs(msg.values[2]) < 2.0:
             z_pos.x = pos[0]
