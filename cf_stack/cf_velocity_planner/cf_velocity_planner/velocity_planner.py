@@ -19,27 +19,44 @@ class VelocityPlanner(Node):
         super().__init__("velocity_planner")
         self.get_logger().info("Started Velocity Planner")
 
+        # subscriber for future points
         self.future_points_subscriber = self.create_subscription(    SegmentListMsg,
                                                                     '/path/future', 
                                                                     self.future_points_callback,
                                                                     10);
     
+        # debug publisher for the avg angle of the future points
         self.angle_publisher = self.create_publisher(    Float32,
                                                         '/path/angle',
                                                         10)
 
+        # publisher for the target-ppc-point-velocity
         self.ppc_velocity_publisher = self.create_publisher(    Float32,
                                                                 '/ppc/velocity',
                                                                 10)
         
+        # timer for publishing the target_velocity
         self.timer = self.create_timer( 0.05,
                                         self.velocity_pub)
         
+        # target velocity
         self.target_velocity : float = 0.2
+        
+        # act velocity - velocity which is send by the ppc_veloicty_publisher
         self.act_velocity : float = 0.2
+        
+        # velocity increment for reaching the target-velocity with the act velocity
         self.velocity_inc : float = 0.03
 
     def get_angle_abc(self, a: SegmentMsg, b: SegmentMsg, c: SegmentMsg) -> float:
+        """!
+        This function calculates the angle between three points.
+        Angle ab bc
+        @param a point a
+        @param b point b
+        @param c point c
+        @return angle
+        """
         ab_x = b.x - a.x
         ab_y = b.y - a.y
         bc_x = c.x - b.x
@@ -51,22 +68,21 @@ class VelocityPlanner(Node):
         magnitude_bc = math.sqrt(bc_x**2 + bc_y**2)
 
         cos_theta = dot_product / (magnitude_ab * magnitude_bc)
-        cos_theta = max(-1.0, min(1.0, cos_theta))  # Numerische Stabilität
+        cos_theta = max(-1.0, min(1.0, cos_theta))
         angle_rad = math.acos(cos_theta)
 
         angle_deg = math.degrees(angle_rad)
         return angle_deg
 
-    def get_velocity(self, angle : float) -> float:
-        if angle >= 0 and angle < 44.0:
-            return 0.40
-        elif angle >= 44 and angle < 90:
-            return 0.10
-        else:
-            return 0.20
 
-    def get_angles(self, msg: SegmentListMsg, samples: int) -> List[float]:
+    def get_angles(self, msg: SegmentListMsg) -> List[float]:
+        """!
+        This function calcultes all path-angles of a given path
+        @param msg path-points
+        @param list of angles
+        """
         angles: List[float] = []
+        samples = len(msg)
 
 
         num_segments = len(msg.segments)
@@ -82,6 +98,11 @@ class VelocityPlanner(Node):
         return angles
     
     def get_dyn_speed_factor(self, angles : List[float]) -> float:
+        """!
+        This function calculates a speed_factor based on the future path angles.
+        @param angles futur path-angles
+        @return velocity
+        """
         avg_angle : float = sum(angles) / len(angles)
 
         path_angle : Float32 = Float32()
@@ -110,6 +131,10 @@ class VelocityPlanner(Node):
         return speed_factor
 
     def velocity_pub(self):
+        """!
+        This callback sends the target-speed to the ppc node
+        For this, it minimises the error between act and target velocity
+        """
         if self.target_velocity - self.act_velocity > 0:
             self.act_velocity += 0.001
         else: 
@@ -120,12 +145,14 @@ class VelocityPlanner(Node):
         self.ppc_velocity_publisher.publish(ppc_velocity)
 
     def future_points_callback(self, msg : SegmentListMsg):
-
-        angles : List[float] = self.get_angles(msg=msg, samples=len(msg.segments))
+        """!
+        This callback comes from the ppc and contains the futur path-points.
+        Based on that, the target-speed is calculated
+        @param msg future path points
+        """
+        angles : List[float] = self.get_angles(msg=msg)
         
-
         speed_factor : float = self.get_dyn_speed_factor(angles=angles)
-
 
         self.target_velocity = speed_factor
 
