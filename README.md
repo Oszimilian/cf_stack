@@ -1,4 +1,4 @@
-# Cracy Fly Stack
+# Crazy Fly Stack
 ## Starting
 ```
 ros2 launch cf_launch cf_launch.launch.py input_grid_path:=/home/maximilian/Git/cf_stack/grids/arena.json
@@ -6,13 +6,12 @@ ros2 launch cf_launch cf_launch.launch.py input_grid_path:=/home/maximilian/Git/
 ros2 launch tha_example tha_framework.launch.py type:=2 backend:=webots id:=0
 ```
 
-## Create Logblock
-```
-# "v -> tab
-# variables: ["range.zrange"]
-ros2 topic pub /cf2/create_log_block crazyflie_interfaces/msg/LogBlock --once
+## Models
+### Domain Model
+![alt text](domain.drawio.png)
 
-# "d -> tab
-# data == 10
-ros2 topic pub /cf2/log/z_range/start std_msgs/msg/Int16 --once
-```
+### Path Patterns
+![alt text](path_patterns.drawio.png)
+
+### State Chart
+![alt text](Statechart.drawio.png)
