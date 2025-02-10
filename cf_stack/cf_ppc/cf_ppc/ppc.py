@@ -233,7 +233,7 @@ class PPC(Node):
         point = Point()
         point.x = pose.x
         point.y = pose.y
-        point.z = 1.0
+        point.z = 0.6
         self.ppc_publisher.publish(point)
 
     def publish_future_points(self, depth : int):

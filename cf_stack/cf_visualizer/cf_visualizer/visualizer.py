@@ -133,7 +133,7 @@ class Visualizer(Node):
 
         pose.pose.position.x = segment.x - (self.x_segment_size / 2)
         pose.pose.position.y = segment.y - (self.y_segment_size / 2)
-        pose.pose.position.z = 1.0
+        pose.pose.position.z = 0.6
         pose.pose.orientation.w = 1.0
 
         return pose

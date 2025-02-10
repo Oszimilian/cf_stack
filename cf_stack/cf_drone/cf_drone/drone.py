@@ -188,7 +188,7 @@ class Drone(Node):
         """
         # only update if the drone is in fly-state
         if self.state == State.FLY:
-            self.send_target(x=msg.x, y=msg.y, z=1.0)
+            self.send_target(x=msg.x, y=msg.y, z=msg.z)
 
     def send_target(self, x : float, y : float, z : float):
         """!
