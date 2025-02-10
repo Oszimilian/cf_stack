@@ -82,7 +82,7 @@ class VelocityPlanner(Node):
         @param list of angles
         """
         angles: List[float] = []
-        samples = len(msg)
+        samples = len(msg.segments)
 
 
         num_segments = len(msg.segments)
@@ -110,25 +110,26 @@ class VelocityPlanner(Node):
         self.angle_publisher.publish(path_angle)
 
         speed_factor : float = 1.0
+        speed_factor_2 : float = 1.0
 
 
         if avg_angle < 5.0:
-            speed_factor = 0.38
-        elif avg_angle < 10.0:
             speed_factor = 0.35
+        elif avg_angle < 10.0:
+            speed_factor = 0.33
         elif avg_angle < 15.0:
-            speed_factor = 0.32
+            speed_factor = 0.29
         elif avg_angle < 25.0: 
-            speed_factor = 0.30
-        elif avg_angle < 35.0:
             speed_factor = 0.25
+        elif avg_angle < 35.0:
+            speed_factor = 0.23
         elif avg_angle < 45.0:
             speed_factor = 0.20
         else:
             speed_factor = 0.15
 
 
-        return speed_factor
+        return speed_factor * speed_factor_2
 
     def velocity_pub(self):
         """!

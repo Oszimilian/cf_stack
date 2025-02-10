@@ -60,7 +60,7 @@ class Sampling(Node):
         z_pos = Point()
         if len(msg.values) < 3: return
         pos = self.get_drone_position()
-        if len(pos) > 0 and abs(msg.values[1]) < 2.0 and abs(msg.values[2]) < 2.0:
+        if len(pos) > 0 and abs(msg.values[1]) < 3.0 and abs(msg.values[2]) < 3.0:
             z_pos.x = pos[0]
             z_pos.y = pos[1]
             z_pos.z = (pos[2] * 1000.0 - msg.values[0] - 35.0) / 1000.0

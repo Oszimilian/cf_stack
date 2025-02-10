@@ -16,3 +16,6 @@ ros2 launch tha_example tha_framework.launch.py type:=2 backend:=webots id:=0
 
 ### State Chart
 ![alt text](Statechart.drawio.png)
+
+### Node Graph
+![alt text](image-1.png)
