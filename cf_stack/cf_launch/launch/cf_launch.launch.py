@@ -39,7 +39,7 @@ def generate_launch_description():
 
     id_arg = DeclareLaunchArgument(
         'id',
-        default_value='2',
+        default_value='0',
         description='id of the drone and the safeflie'
     )
 
